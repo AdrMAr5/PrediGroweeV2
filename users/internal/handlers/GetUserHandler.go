@@ -4,6 +4,7 @@ import (
 	"PrediGroweeV2/users/internal/storage"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 )
 
 type GetUserHandler struct {
@@ -18,5 +19,19 @@ func NewGetUserHandler(store storage.Store, logger *zap.Logger) *GetUserHandler 
 	}
 }
 func (h *GetUserHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(rw, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+	user, err := h.store.GetUserById(id)
+	if err != nil {
+		http.Error(rw, "User not found", http.StatusNotFound)
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	err = user.ToJSON(rw)
+	if err != nil {
+		h.logger.Error("Error marshalling user", zap.Error(err))
+	}
 }

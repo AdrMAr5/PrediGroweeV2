@@ -2,9 +2,9 @@
 POST localhost:8080/register
 
 {
-    "first_name": "Karolina",
-    "last_name": "Jarmoła",
-    "email": "rob.jar@gmail.com",
+    "first_name": "user1",
+    "last_name": "user1lastname",
+    "email": "user.some@gmail.com",
     "password": "password123"
 }
 
@@ -12,10 +12,18 @@ POST localhost:8080/register
 POST localhost:8080/login
 
 {
-    "email": "rob.jar@gmail.com",
+    "email": "user.some@gmail.com",
     "password": "password123"
 }
+
+### get user
+GET localhost:8080/users/0
+authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjUxMzU2NDQsInN1YiI6IjAifQ.uj7PDfgL_zL4l-Xp4RWPktnpT0uDHojDIfEnDLiTReQ
 
 ### refresh token
 POST localhost:8080/refresh
 authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjUxMzQxODYsInN1YiI6IjAifQ.dUyXIffIaxNI1Bb1sZu9zdou9Tt5wzWjGNZmNlu4a8A
+
+### verify token
+POST localhost:8080/verify
+authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjUxMzU2NDQsInN1YiI6IjAifQ.uj7PDfgL_zL4l-Xp4RWPktnpT0uDHojDIfEnDLiTReQ

@@ -65,7 +65,7 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux, postgresStorage storag
 	router.HandleFunc("GET /health", a.HealthCheckHandler)
 	router.HandleFunc("POST /register", handlers.NewRegisterHandler(postgresStorage, a.logger).Handle)
 	router.HandleFunc("POST /login", handlers.NewLoginHandler(postgresStorage, a.logger).Handle)
-	router.HandleFunc("GET /user", middleware.WithJWTAuth(handlers.NewGetUserHandler(postgresStorage, a.logger).Handle, postgresStorage))
+	router.HandleFunc("GET /users/{id}", middleware.WithJWTAuth(handlers.NewGetUserHandler(postgresStorage, a.logger).Handle, postgresStorage))
 	router.HandleFunc("POST /verify", middleware.WithJWTAuth(handlers.NewVerifyTokenHandler(postgresStorage, a.logger).Handle, postgresStorage))
 	router.HandleFunc("POST /refresh", handlers.NewRefreshTokenHandler(postgresStorage, a.logger).Handle)
 }
