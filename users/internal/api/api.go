@@ -6,6 +6,7 @@ import (
 	"PrediGroweeV2/users/internal/storage"
 	"context"
 	"encoding/json"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -30,10 +31,16 @@ func NewApiServer(addr string, store storage.Store, logger *zap.Logger) *ApiServ
 
 func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
-	a.registerRoutes(mux, a.storage)
+	a.registerRoutes(mux)
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from this origin
+		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
+		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
+	})
 	srv := &http.Server{
 		Addr:         ":8080",
-		Handler:      mux,
+		Handler:      corsMiddleware.Handler(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -61,13 +68,13 @@ func (a *ApiServer) Run() {
 	a.logger.Info("Server exiting")
 }
 
-func (a *ApiServer) registerRoutes(router *http.ServeMux, postgresStorage storage.Store) {
+func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /health", a.HealthCheckHandler)
-	router.HandleFunc("POST /register", handlers.NewRegisterHandler(postgresStorage, a.logger).Handle)
-	router.HandleFunc("POST /login", handlers.NewLoginHandler(postgresStorage, a.logger).Handle)
-	router.HandleFunc("GET /users/{id}", middleware.WithJWTAuth(handlers.NewGetUserHandler(postgresStorage, a.logger).Handle, postgresStorage))
-	router.HandleFunc("POST /verify", middleware.WithJWTAuth(handlers.NewVerifyTokenHandler(postgresStorage, a.logger).Handle, postgresStorage))
-	router.HandleFunc("POST /refresh", handlers.NewRefreshTokenHandler(postgresStorage, a.logger).Handle)
+	router.HandleFunc("POST /register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("POST /login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("GET /users/{id}", middleware.WithJWTAuth(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
+	router.HandleFunc("POST /verify", middleware.WithJWTAuth(handlers.NewVerifyTokenHandler(a.storage, a.logger).Handle, a.storage))
+	router.HandleFunc("POST /refresh", handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle)
 }
 
 func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {

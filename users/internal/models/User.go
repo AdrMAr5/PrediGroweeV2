@@ -8,10 +8,10 @@ import (
 
 type User struct {
 	ID        int    `json:"id"`
-	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 	Email     string `json:"email" validate:"required,email"`
-	Password  string `json:"password" validate:"required"`
+	Password  string `json:"password,omitempty" validate:"required"`
 }
 
 func (u *User) Validate() error {
@@ -34,4 +34,11 @@ func (l *LoginUserPayload) Validate() error {
 }
 func (l *LoginUserPayload) FromJSON(r io.Reader) error {
 	return json.NewDecoder(r).Decode(l)
+}
+
+type UserResponse struct {
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }

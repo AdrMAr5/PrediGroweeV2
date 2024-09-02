@@ -28,27 +28,28 @@ func (p *PostgresStorage) Ping() error {
 }
 
 func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
-	p.logger.Info("creating user")
-	return &models.User{
-		ID:        0,
-		FirstName: "mock",
-		LastName:  "user",
-		Email:     "email",
-		Password:  "hash",
-	}, nil
+	var userCreated models.User
+	err := p.db.QueryRow("INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id, email, first_name, last_name", user.FirstName, user.LastName, user.Email, user.Password).Scan(&userCreated.ID, &userCreated.Email, &userCreated.FirstName, &userCreated.LastName)
+	if err != nil {
+		return nil, err
+	}
+	return &userCreated, nil
 }
 
 func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
-	return nil, nil
+	var user models.User
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (p *PostgresStorage) GetUserByEmail(email string) (*models.User, error) {
-	p.logger.Info("get user")
-	return &models.User{
-		ID:        0,
-		FirstName: "mock",
-		LastName:  "user",
-		Email:     email,
-		Password:  "password123",
-	}, nil
+	var user models.User
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

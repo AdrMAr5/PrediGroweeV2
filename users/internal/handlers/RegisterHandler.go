@@ -25,10 +25,17 @@ func NewRegisterHandler(store storage.Store, logger *zap.Logger) *RegisterHandle
 }
 
 func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Registering user")
 	var user models.User
 	err := user.FromJSON(r.Body)
 	if err != nil {
 		h.logger.Error("Error unmarshalling json", zap.Error(err))
+		http.Error(w, "Invalid user", http.StatusBadRequest)
+		return
+	}
+	err = user.Validate()
+	if err != nil {
+		h.logger.Error("Error validating user", zap.Error(err))
 		http.Error(w, "Invalid user", http.StatusBadRequest)
 		return
 	}
