@@ -39,6 +39,10 @@ func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user", http.StatusBadRequest)
 		return
 	}
+	if _, err := h.store.GetUserByEmail(user.Email); err == nil {
+		http.Error(w, "User already exists", http.StatusConflict)
+		return
+	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		h.logger.Error("Error hashing password", zap.Error(err))
@@ -58,21 +62,16 @@ func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	newRefreshToken, err := auth.GenerateRefreshToken(strconv.Itoa(userCreated.ID))
+	sessionId, err := auth.GenerateSessionID(64)
 	if err != nil {
-		h.logger.Error("Error generating refresh token", zap.Error(err))
+		h.logger.Error("Error generating session id", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    newRefreshToken,
-		HttpOnly: true,
-		Secure:   false, // Set to true if using HTTPS
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-		Expires:  time.Now().Add(3 * 24 * time.Hour),
+	err = h.store.SaveUserSession(models.UserSession{
+		UserID:     userCreated.ID,
+		SessionID:  sessionId,
+		Expiration: time.Now().Add(7 * 24 * time.Hour),
 	})
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access_token",
@@ -80,13 +79,12 @@ func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   false, // Set to true if using HTTPS
 		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Now().Add(15 * time.Minute),
+		Expires:  time.Now().Add(24 * time.Hour * 14),
 	})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	response := map[string]interface{}{
-		"user":  userCreated,
-		"token": accessToken,
+		"user": userCreated,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error("Error writing response", zap.Error(err))
