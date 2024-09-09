@@ -1,26 +1,14 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"os"
 	"time"
 )
-
-//func CreateAndSendAuthCookie(rw http.ResponseWriter, userID int) (string, error) {
-//	secret := []byte(os.Getenv("JWT_SECRET"))
-//	token, err := CreateJWT(secret, userID)
-//	if err != nil {
-//		http.Error(rw, "Unable to create token", http.StatusInternalServerError)
-//		return "", err
-//	}
-//	http.SetCookie(rw, &http.Cookie{
-//		Name:  "Authorization",
-//		Value: token,
-//	})
-//	return token, nil
-//}
 
 func ValidateJWT(tokenString string) (token *jwt.Token, err error) {
 	secret := os.Getenv("JWT_SECRET")
@@ -35,25 +23,38 @@ func ValidateJWT(tokenString string) (token *jwt.Token, err error) {
 func GenerateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(15 * time.Minute).Unix(), // Short-lived access token
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
-
-func GenerateRefreshToken(userID string) (string, error) {
-	claims := jwt.MapClaims{
-		"sub": userID,
-		"exp": time.Now().Add(7 * 24 * time.Hour).Unix(), // Longer-lived refresh token
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-}
-
-func ExtractRefreshTokenFromRequest(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("refresh_token")
+func ExtractAccessTokenFromRequest(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("access_token")
 	if err != nil {
 		return "", err
 	}
+	if cookie.Value == "" {
+		return "", fmt.Errorf("empty access token")
+	}
 	return cookie.Value, nil
+}
+func ExtractSessionIDFromRequest(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return "", err
+	}
+	if cookie.Value == "" {
+		return "", fmt.Errorf("empty session id")
+	}
+	return cookie.Value, nil
+}
+func GenerateSessionID(length int) (string, error) {
+	bytes := make([]byte, length)
+	// Fill the byte slice with random bytes
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	// Convert the byte slice to a hex string
+	return hex.EncodeToString(bytes), nil
 }

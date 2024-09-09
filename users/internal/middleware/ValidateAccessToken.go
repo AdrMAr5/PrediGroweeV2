@@ -4,16 +4,15 @@ import (
 	"PrediGroweeV2/users/internal/auth"
 	"PrediGroweeV2/users/internal/storage"
 	"github.com/golang-jwt/jwt/v5"
-	"log"
 	"net/http"
 	"strconv"
 )
 
-func WithJWTAuth(next http.HandlerFunc, storage storage.Store) http.HandlerFunc {
+func ValidateAccessToken(next http.HandlerFunc, storage storage.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
-		if tokenString == "" {
-			http.Error(w, "Missing authorization token", http.StatusUnauthorized)
+		tokenString, err := auth.ExtractAccessTokenFromRequest(r)
+		if err != nil {
+			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
 		token, err := auth.ValidateJWT(tokenString)
@@ -22,21 +21,21 @@ func WithJWTAuth(next http.HandlerFunc, storage storage.Store) http.HandlerFunc 
 			return
 		}
 		tokenClaims := token.Claims.(jwt.MapClaims)
-		userID, err := strconv.Atoi(tokenClaims["sub"].(string))
+		tokenUserID, err := strconv.Atoi(tokenClaims["sub"].(string))
 		if err != nil {
-			log.Println("Error parsing user_id", err)
 			http.Error(w, "Permission denied", http.StatusForbidden)
 			return
 		}
-		// check if user exists
-		_, err = storage.GetUserById(userID)
-		if err != nil {
-			log.Println("Error getting user", err)
+		sessionUserID := r.Context().Value("user_id")
+		if sessionUserID != tokenUserID {
 			http.Error(w, "Permission denied", http.StatusForbidden)
 			return
 		}
-		r.Header.Set("X-User-ID", tokenClaims["sub"].(string))
-
+		_, err = storage.GetUserById(tokenUserID)
+		if err != nil {
+			http.Error(w, "Permission denied", http.StatusForbidden)
+			return
+		}
 		next(w, r)
 	}
 }
