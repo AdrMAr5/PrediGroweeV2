@@ -19,9 +19,14 @@ func NewGetUserHandler(store storage.Store, logger *zap.Logger) *GetUserHandler 
 	}
 }
 func (h *GetUserHandler) Handle(rw http.ResponseWriter, r *http.Request) {
+	sessionUserID := r.Context().Value("user_id").(int)
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(rw, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+	if sessionUserID != id {
+		http.Error(rw, "Permission denied", http.StatusForbidden)
 		return
 	}
 	user, err := h.store.GetUserById(id)

@@ -72,9 +72,10 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /health", a.HealthCheckHandler)
 	router.HandleFunc("POST /register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
-	router.HandleFunc("GET /users/{id}", middleware.WithJWTAuth(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
-	router.HandleFunc("POST /verify", middleware.WithJWTAuth(handlers.NewVerifyTokenHandler(a.storage, a.logger).Handle, a.storage))
-	router.HandleFunc("POST /refresh", handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("GET /users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /verify", middleware.ValidateSession(middleware.ValidateAccessToken(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }).ServeHTTP, a.storage), a.storage))
+	router.HandleFunc("POST /refresh", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
 }
 
 func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
