@@ -18,5 +18,5 @@ func NewGetQuestionHandler(store storage.Store, logger *zap.Logger) *GetQuestion
 	}
 }
 func (h *GetQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(http.StatusNotImplemented)
+	rw.WriteHeader(http.StatusOK)
 }

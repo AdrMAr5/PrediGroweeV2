@@ -1,8 +1,8 @@
 package api
 
 import (
-	"PrediGroweeV2/quiz/handlers"
 	"PrediGroweeV2/quiz/internal/clients"
+	"PrediGroweeV2/quiz/internal/handlers"
 	"PrediGroweeV2/quiz/internal/middleware"
 	"PrediGroweeV2/quiz/internal/storage"
 	"context"
@@ -70,5 +70,8 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/question/{id}", handlers.NewGetQuestionHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("GET /quiz/question/{id}", handlers.NewGetQuestionHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("POST /quiz/new", handlers.NewStartQuizHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", handlers.NewSubmitAnswerHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("GET /quiz/{quizSessionId}/finish", handlers.NewFinishQuizHandler(a.storage, a.logger).Handle)
 }
