@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"PrediGroweeV2/quiz/internal/models"
 	"bytes"
 	"encoding/json"
 	"go.uber.org/zap"
@@ -19,20 +20,26 @@ func NewAuthClient(addr string, logger *zap.Logger) *AuthClient {
 	}
 }
 
-func (c *AuthClient) VerifyAuthToken(token string) error {
+func (c *AuthClient) VerifyAuthToken(token string) (models.UserData, error) {
 	body := struct {
 		AuthToken string `json:"token"`
 	}{
 		AuthToken: token,
 	}
-	jsonData, err := json.Marshal(body)
-	data := bytes.NewBuffer(jsonData)
-	resp, err := http.Post(c.addr+"/verify", "application/json", data)
+	jsonPayload, err := json.Marshal(body)
+	payload := bytes.NewBuffer(jsonPayload)
+	resp, err := http.Post(c.addr+"/verify", "application/json", payload)
 	if err != nil {
-		return err
+		return models.UserData{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return err
+		return models.UserData{}, err
 	}
-	return nil
+	var userDataResponse models.UserData
+	err = userDataResponse.FromJSON(resp.Body)
+	if err != nil {
+		return models.UserData{}, err
+	}
+	return userDataResponse, nil
+
 }

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"PrediGroweeV2/quiz/internal/clients"
+	"context"
 	"log"
 	"net/http"
 )
@@ -14,11 +15,13 @@ func VerifyToken(next http.HandlerFunc, authClient *clients.AuthClient) http.Han
 			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
-		err = authClient.VerifyAuthToken(cookie.Value)
+		userData, err := authClient.VerifyAuthToken(cookie.Value)
 		if err != nil {
 			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
+		r = r.WithContext(context.WithValue(r.Context(), "user_id", userData.UserID))
+		r = r.WithContext(context.WithValue(r.Context(), "user_role", userData.Role))
 		next(w, r)
 	}
 }
