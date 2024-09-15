@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"PrediGroweeV2/users/internal/auth"
-	"PrediGroweeV2/users/internal/storage"
+	"PrediGroweeV2/auth/internal/auth"
+	"PrediGroweeV2/auth/internal/storage"
 	"context"
 	"net/http"
 	"time"

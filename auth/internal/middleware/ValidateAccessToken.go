@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"PrediGroweeV2/users/internal/auth"
-	"PrediGroweeV2/users/internal/storage"
+	"PrediGroweeV2/auth/internal/auth"
+	"PrediGroweeV2/auth/internal/storage"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strconv"
