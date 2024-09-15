@@ -1,13 +1,14 @@
 package storage
 
 import (
-	"PrediGroweeV2/users/internal/models"
+	"PrediGroweeV2/auth/internal/models"
 	"database/sql"
 	"go.uber.org/zap"
 )
 
 type Store interface {
 	Ping() error
+	Close() error
 	CreateUser(user *models.User) (*models.User, error)
 	GetUserById(id int) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
@@ -29,6 +30,10 @@ func NewPostgresStorage(db *sql.DB, logger *zap.Logger) *PostgresStorage {
 }
 func (p *PostgresStorage) Ping() error {
 	return p.db.Ping()
+}
+
+func (p *PostgresStorage) Close() error {
+	return p.db.Close()
 }
 
 func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {

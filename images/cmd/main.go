@@ -1,15 +1,15 @@
 package main
 
 import (
-	"PrediGroweeV2/users/internal/api"
-	"PrediGroweeV2/users/internal/storage"
+	"PrediGroweeV2/images/internal/api"
+	"PrediGroweeV2/images/internal/clients"
+	"PrediGroweeV2/images/internal/storage"
 	"database/sql"
 	"fmt"
-	"log"
-	"time"
-
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+	"log"
+	"time"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	}(logger)
 
 	// Initialize database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", "localhost", "5432", "postgres", "postgres", "api-db"))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", "localhost", "5432", "postgres", "postgres", "quiz_images"))
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
@@ -48,6 +48,7 @@ func main() {
 		logger.Fatal("Failed to ping database", zap.Error(err))
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
-	apiServer := api.NewApiServer(":8080", postgresStorage, logger)
+	authClient := clients.NewAuthClient("http://localhost:8080", logger)
+	apiServer := api.NewApiServer(":8081", postgresStorage, logger, authClient)
 	apiServer.Run()
 }
