@@ -21,6 +21,6 @@ type StartQuizPayload struct {
 func (p *StartQuizPayload) Validate() error {
 	return validator.New().Struct(p)
 }
-func (p *StartQuizPayload) fromJSON(ioReader io.Reader) error {
+func (p *StartQuizPayload) FromJSON(ioReader io.Reader) error {
 	return json.NewDecoder(ioReader).Decode(p)
 }
