@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
-	"strconv"
 )
 
 type StartQuizHandler struct {
@@ -24,11 +23,8 @@ func NewStartQuizHandler(store storage.Store, logger *zap.Logger) *StartQuizHand
 }
 
 func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.Context().Value("userID").(string))
-	if err != nil {
-		http.Error(rw, "internal server error", http.StatusInternalServerError)
-		return
-	}
+	h.logger.Info("Starting quiz session")
+	userID := r.Context().Value("user_id").(int)
 	var payload models.StartQuizPayload
 	if err := payload.FromJSON(r.Body); err != nil {
 		http.Error(rw, "invalid request payload", http.StatusBadRequest)
@@ -38,18 +34,13 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	quizSessionID, err := generateSessionID(32)
-	if err != nil {
-		http.Error(rw, "internal server error", http.StatusInternalServerError)
-		return
-	}
 	quizSession := models.QuizSession{
-		ID:     quizSessionID,
 		Mode:   payload.Mode,
 		UserId: userID,
 	}
 	sessionCreated, err := h.storage.CreateQuizSession(quizSession)
 	if err != nil {
+		h.logger.Error("failed to create quiz session in db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -58,6 +49,7 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		"session": sessionCreated,
 	}
 	if err := json.NewEncoder(rw).Encode(response); err != nil {
+		h.logger.Error("failed to encode response", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}

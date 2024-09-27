@@ -6,7 +6,7 @@ import (
 )
 
 type UserData struct {
-	UserID string `json:"user_id"`
+	UserID int    `json:"user_id"`
 	Role   string `json:"role"`
 }
 

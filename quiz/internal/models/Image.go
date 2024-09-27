@@ -1,6 +1,6 @@
 package models
 
 type Image struct {
-	ID   int
-	Path string
+	URL string
+	Age int
 }

@@ -4,6 +4,7 @@ import (
 	"PrediGroweeV2/quiz/internal/models"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -26,20 +27,39 @@ func (c *AuthClient) VerifyAuthToken(token string) (models.UserData, error) {
 	}{
 		AuthToken: token,
 	}
-	jsonPayload, err := json.Marshal(body)
-	payload := bytes.NewBuffer(jsonPayload)
-	resp, err := http.Post(c.addr+"/verify", "application/json", payload)
-	if err != nil {
-		return models.UserData{}, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return models.UserData{}, err
-	}
-	var userDataResponse models.UserData
-	err = userDataResponse.FromJSON(resp.Body)
-	if err != nil {
-		return models.UserData{}, err
-	}
-	return userDataResponse, nil
 
+	jsonPayload, err := json.Marshal(body)
+	if err != nil {
+		return models.UserData{}, fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", c.addr+"/verify", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return models.UserData{}, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.UserData{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.logger.Error("unexpected status code", zap.Error(err), zap.Int("status_code", resp.StatusCode))
+		return models.UserData{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var userDataResponse models.UserData
+	err = json.NewDecoder(resp.Body).Decode(&userDataResponse)
+	if err != nil {
+		return models.UserData{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	c.logger.Info("response", zap.Any("response", userDataResponse))
+
+	return userDataResponse, nil
 }

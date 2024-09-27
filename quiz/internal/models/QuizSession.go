@@ -1,7 +1,7 @@
 package models
 
 type QuizSession struct {
-	ID                string
+	ID                int
 	Mode              QuizMode
 	UserId            int
 	CurrentQuestionId int

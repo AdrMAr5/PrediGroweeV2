@@ -41,7 +41,7 @@ func (a *ApiServer) Run() {
 	})
 	srv := &http.Server{
 		Addr:         a.addr,
-		Handler:      middleware.VerifyToken(corsMiddleware.Handler(mux).ServeHTTP, a.authClient),
+		Handler:      corsMiddleware.Handler(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -70,8 +70,8 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /quiz/question/{id}", handlers.NewGetQuestionHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("POST /quiz/new", handlers.NewStartQuizHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", handlers.NewSubmitAnswerHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("GET /quiz/{quizSessionId}/finish", handlers.NewFinishQuizHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("GET /quiz/{quizSessionId}/question/{id}", middleware.VerifyToken(handlers.NewGetQuestionHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("GET /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger).Handle, a.authClient))
 }

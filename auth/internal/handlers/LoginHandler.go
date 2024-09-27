@@ -71,7 +71,7 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionId,
 		HttpOnly: true,
 		Secure:   false, // Set to true if using HTTPS
-		SameSite: http.SameSiteStrictMode,
+		//SameSite: http.SameSiteStrictMode,
 	})
 	http.SetCookie(w, &http.Cookie{
 		Path:     "/",
@@ -79,8 +79,8 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Value:    accessToken,
 		HttpOnly: true,
 		Secure:   false, // Set to true if using HTTPS
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Now().Add(15 * time.Minute),
+		//SameSite: http.SameSiteStrictMode,
+		Expires: time.Now().Add(15 * time.Minute),
 	})
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(map[string]string{"token": accessToken, "message": "Login successful"})

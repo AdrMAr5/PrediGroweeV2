@@ -33,7 +33,7 @@ func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from this origin
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8082"}, // Allow requests from this origin
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
 		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
@@ -73,7 +73,7 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("GET /users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
-	router.HandleFunc("POST /verify", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage), a.storage))
+	router.HandleFunc("POST /verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
 	router.HandleFunc("POST /refresh", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage), a.storage))
 	router.HandleFunc("POST /logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
 }

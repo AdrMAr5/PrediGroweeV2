@@ -20,18 +20,21 @@ func NewGetQuestionHandler(store storage.Store, logger *zap.Logger) *GetQuestion
 	}
 }
 func (h *GetQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-	questionID := r.URL.Query().Get("id")
+	questionID := r.PathValue("id")
 	if questionID == "" {
+		h.logger.Info("no question id provided")
 		http.Error(rw, "invalid question id", http.StatusBadRequest)
 		return
 	}
 	id, err := strconv.Atoi(questionID)
 	if err != nil {
+		h.logger.Info("invalid question id")
 		http.Error(rw, "invalid question id", http.StatusBadRequest)
 		return
 	}
 	question, err := h.Store.GetQuestionById(id)
 	if err != nil {
+		h.logger.Error("failed to get question from db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}

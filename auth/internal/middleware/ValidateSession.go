@@ -4,6 +4,7 @@ import (
 	"PrediGroweeV2/auth/internal/auth"
 	"PrediGroweeV2/auth/internal/storage"
 	"context"
+	"log"
 	"net/http"
 	"time"
 )
@@ -11,6 +12,7 @@ import (
 func ValidateSession(next http.HandlerFunc, storage storage.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID, err := auth.ExtractSessionIDFromRequest(r)
+		log.Println(sessionID)
 		if err != nil {
 			http.Error(w, "Invalid session ID", http.StatusUnauthorized)
 			return
