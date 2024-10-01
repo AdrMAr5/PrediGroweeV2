@@ -1,16 +1,21 @@
 package storage
 
 import (
-	"PrediGroweeV2/quiz/internal/models"
 	"database/sql"
+	"fmt"
 	"go.uber.org/zap"
+	"quiz/internal/models"
+	"time"
 )
 
 type Store interface {
 	Ping() error
 	Close() error
-	GetQuestionById(id int) (models.Question, error)
+	GetQuestionByID(id int) (models.Question, error)
 	CreateQuizSession(session models.QuizSession) (models.QuizSession, error)
+	GetQuizSessionByID(id int) (models.QuizSession, error)
+	UpdateQuizSession(session models.QuizSession) error
+	GetUserQuizSessions(userID int) ([]models.Question, error)
 }
 
 type PostgresStorage struct {
@@ -32,73 +37,96 @@ func (p *PostgresStorage) Ping() error {
 func (p *PostgresStorage) Close() error {
 	return p.db.Close()
 }
-
-func (p *PostgresStorage) GetQuestionById(id int) (models.Question, error) {
-	var question models.Question
-
-	// Query for basic question info and patient info
+func (p *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
+	var patientID int
+	var q models.Question
 	err := p.db.QueryRow(`
-        SELECT q.id, q.title, q.description, pi.patient_id, pi.gender 
-        FROM questions q
-        JOIN patient_info pi ON q.patient_id = pi.id
-        WHERE q.id = $1`, id).Scan(
-		&question.ID, &question.Title, &question.Description, &question.PatientID, &question.Gender)
+		SELECT q.id, q.question, p.code, p.gender, p.age1, p.age2, p.prediction_age, p.id
+		FROM questions q
+		JOIN patients p ON q.patient_id = p.id
+		WHERE q.id = $1`, id).Scan(
+		&q.ID, &q.Question, &q.PatientCode, &q.Gender,
+		&q.Ages.Age1, &q.Ages.Age2, &q.Ages.PredictionAge, &patientID)
 	if err != nil {
-		return models.Question{}, err
+		return models.Question{}, fmt.Errorf("error reading question: %w", err)
 	}
 
-	// Query for images
-	rows, err := p.db.Query("SELECT image_url, age FROM images WHERE question_id = $1", id)
+	rows, err := p.db.Query(`
+		SELECT pp.age, p.name, pp.value
+		FROM patient_parameters pp
+		JOIN parameters p ON pp.parameter_id = p.id
+		JOIN patients pat ON pp.patient_id = pat.id
+		WHERE pat.id = $1 AND (pp.age = $2 OR pp.age = $3)`,
+		patientID, q.Ages.Age1, q.Ages.Age2)
 	if err != nil {
-		return models.Question{}, err
+		return models.Question{}, fmt.Errorf("error reading parameters: %w", err)
 	}
 	defer rows.Close()
 
+	q.Parameters = make(map[int][]models.Parameter)
 	for rows.Next() {
-		var img models.Image
-		if err := rows.Scan(&img.URL, &img.Age); err != nil {
-			return models.Question{}, err
+		var age int
+		var param models.Parameter
+		err := rows.Scan(&age, &param.Name, &param.Value)
+		if err != nil {
+			return models.Question{}, fmt.Errorf("error scanning parameter: %w", err)
 		}
-		question.Images = append(question.Images, img)
+		q.Parameters[age] = append(q.Parameters[age], param)
 	}
-
-	// Query for parameters
-	rows, err = p.db.Query(`
-        SELECT p.name, p.unit, qp.age, qp.value 
-        FROM question_parameters qp
-        JOIN parameters p ON qp.parameter_id = p.id
-        WHERE qp.question_id = $1
-        ORDER BY p.name, qp.age`, id)
-	if err != nil {
-		return models.Question{}, err
-	}
-	defer rows.Close()
-
-	paramMap := make(map[string][]models.ParameterValue)
-	for rows.Next() {
-		var name, unit string
-		var pv models.ParameterValue
-		if err := rows.Scan(&name, &unit, &pv.Age, &pv.Value); err != nil {
-			return models.Question{}, err
-		}
-		paramMap[name] = append(paramMap[name], pv)
-	}
-
-	for name, values := range paramMap {
-		question.Parameters = append(question.Parameters, models.Parameter{
-			Name:   name,
-			Unit:   "unitMock",
-			Values: values,
-		})
-	}
-
-	return question, nil
+	return q, nil
 }
 
-func (p *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.QuizSession, error) {
-	err := p.db.QueryRow("INSERT INTO quiz_sessions (mode, user_id) VALUES ($1, $2) RETURNING session_id, mode, user_id, current_question_id, state", session.Mode, session.UserId).Scan(&session.ID, &session.Mode, &session.UserId, &session.CurrentQuestionId, &session.State)
+func (p *PostgresStorage) GetQuizSessionByID(id int) (models.QuizSession, error) {
+	var session models.QuizSession
+	err := p.db.QueryRow(`
+		SELECT id, user_id, status, mode, current_question, created_at, updated_at, finished_at 
+		FROM quiz_sessions WHERE id = $1`, id).
+		Scan(&session.ID, &session.UserID, &session.Status, &session.Mode,
+			&session.CurrentQuestionID, &session.CreatedAt, &session.UpdatedAt, &session.FinishedAt)
 	if err != nil {
 		return models.QuizSession{}, err
 	}
 	return session, nil
+}
+func (p *PostgresStorage) GetUserQuizSessions(userID int) ([]models.QuizSession, error) {
+	var sessions []models.QuizSession
+	rows, err := p.db.Query(`SELECT id, user_id, status, mode, current_question, created_at, updated_at, finished_at
+		FROM quiz_sessions WHERE user_id = $1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var session models.QuizSession
+		err := rows.Scan(&session.ID, &session.UserID, &session.Status, &session.Mode,
+			&session.CurrentQuestionID, &session.CreatedAt, &session.UpdatedAt, &session.FinishedAt)
+		if err != nil {
+			return nil, err
+		}
+		sessions = append(sessions, session)
+	}
+	return sessions, nil
+}
+
+func (p *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.QuizSession, error) {
+	err := p.db.QueryRow(`
+		INSERT INTO quiz_sessions (user_id, status, mode, current_question) 
+		VALUES ($1, $2, $3, $4) 
+		RETURNING id, user_id, status, mode, current_question, created_at`,
+		session.UserID, session.Status, session.Mode, 1).
+		Scan(&session.ID, &session.UserID, &session.Status, &session.Mode,
+			&session.CurrentQuestionID, &session.CreatedAt)
+	if err != nil {
+		return models.QuizSession{}, err
+	}
+	return session, nil
+}
+
+func (p *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
+	_, err := p.db.Exec(`
+		UPDATE quiz_sessions 
+		SET status = $1, current_question = $2, updated_at = $3, finished_at = $4 
+		WHERE id = $5`,
+		session.Status, session.CurrentQuestionID, time.Now(), session.FinishedAt, session.ID)
+	return err
 }

@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"PrediGroweeV2/quiz/internal/models"
-	"PrediGroweeV2/quiz/internal/storage"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
+	"quiz/internal/models"
+	"quiz/internal/storage"
 )
 
 type StartQuizHandler struct {
@@ -36,7 +36,8 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	}
 	quizSession := models.QuizSession{
 		Mode:   payload.Mode,
-		UserId: userID,
+		UserID: userID,
+		Status: models.QuizStatusNotStarted,
 	}
 	sessionCreated, err := h.storage.CreateQuizSession(quizSession)
 	if err != nil {

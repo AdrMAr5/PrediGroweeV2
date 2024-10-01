@@ -1,9 +1,14 @@
 package models
 
+import "time"
+
 type QuizSession struct {
 	ID                int
 	Mode              QuizMode
-	UserId            int
-	CurrentQuestionId int
-	State             string
+	UserID            int
+	CurrentQuestionID int
+	Status            QuizStatus
+	CreatedAt         *time.Time
+	UpdatedAt         *time.Time
+	FinishedAt        *time.Time
 }

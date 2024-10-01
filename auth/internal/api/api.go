@@ -1,9 +1,9 @@
 package api
 
 import (
-	"PrediGroweeV2/auth/internal/handlers"
-	"PrediGroweeV2/auth/internal/middleware"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/handlers"
+	"auth/internal/middleware"
+	"auth/internal/storage"
 	"context"
 	"encoding/json"
 	"github.com/rs/cors"
@@ -33,13 +33,13 @@ func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8082"}, // Allow requests from this origin
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:80"}, // Allow requests from this origin
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
 		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
 	})
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         "0.0.0.0:8080",
 		Handler:      corsMiddleware.Handler(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -69,13 +69,13 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(router *http.ServeMux) {
-	router.HandleFunc("GET /health", a.HealthCheckHandler)
-	router.HandleFunc("POST /register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
-	router.HandleFunc("POST /login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
-	router.HandleFunc("GET /users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
-	router.HandleFunc("POST /verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
-	router.HandleFunc("POST /refresh", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage), a.storage))
-	router.HandleFunc("POST /logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
+	router.HandleFunc("GET /auth/health", a.HealthCheckHandler)
+	router.HandleFunc("POST /auth/register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("POST /auth/login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("GET /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /auth/verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
+	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /auth/logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
 }
 
 func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {

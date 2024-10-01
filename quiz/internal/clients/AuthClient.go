@@ -1,12 +1,12 @@
 package clients
 
 import (
-	"PrediGroweeV2/quiz/internal/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
+	"quiz/internal/models"
 )
 
 type AuthClient struct {

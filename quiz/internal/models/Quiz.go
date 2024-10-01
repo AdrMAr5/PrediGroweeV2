@@ -7,11 +7,17 @@ import (
 )
 
 type QuizMode = string
+type QuizStatus = string
 
 const (
 	QuizModeEducational QuizMode = "educational"
 	QuizModeClassic     QuizMode = "classic"
 	QuizModeLimitedTime QuizMode = "limited_time"
+)
+const (
+	QuizStatusNotStarted QuizStatus = "not_started"
+	QuizStatusInProgress QuizStatus = "in_progress"
+	QuizStatusFinished   QuizStatus = "finished"
 )
 
 type StartQuizPayload struct {

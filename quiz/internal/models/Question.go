@@ -2,21 +2,20 @@ package models
 
 type Question struct {
 	ID          int
-	Title       string
-	Description string
-	PatientID   string
+	Question    string
+	PatientCode string
 	Gender      string
-	Images      []Image
-	Parameters  []Parameter
+	Ages        PatientAges
+	Images      map[int]string
+	Parameters  map[int][]Parameter
+}
+type PatientAges struct {
+	Age1          int
+	Age2          int
+	PredictionAge int
 }
 
 type Parameter struct {
-	Name   string
-	Unit   string
-	Values []ParameterValue
-}
-
-type ParameterValue struct {
-	Age   int
+	Name  string
 	Value float64
 }

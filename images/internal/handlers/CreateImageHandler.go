@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"PrediGroweeV2/images/internal/storage"
 	"go.uber.org/zap"
+	"images/internal/storage"
 	"net/http"
 )
 

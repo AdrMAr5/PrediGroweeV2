@@ -1,14 +1,15 @@
 package main
 
 import (
-	"PrediGroweeV2/quiz/internal/api"
-	"PrediGroweeV2/quiz/internal/clients"
-	"PrediGroweeV2/quiz/internal/storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
+	"os"
+	"quiz/internal/api"
+	"quiz/internal/clients"
+	"quiz/internal/storage"
 	"time"
 )
 
@@ -27,7 +28,7 @@ func main() {
 	}(logger)
 
 	// Initialize database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", "localhost", "5432", "postgres", "postgres", "quiz"))
+	db, err := connectToPostgres()
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
@@ -48,7 +49,21 @@ func main() {
 		logger.Fatal("Failed to ping database", zap.Error(err))
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
-	authClient := clients.NewAuthClient("http://localhost:8080", logger)
-	apiServer := api.NewApiServer(":8082", postgresStorage, logger, authClient)
+	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
+	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient)
 	apiServer.Run()
+}
+func connectToPostgres() (*sql.DB, error) {
+	env := os.Getenv("ENV")
+	sslMode := "require"
+	if env == "local" {
+		sslMode = "disable"
+	}
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, dbName, sslMode)
+	return sql.Open("postgres", connString)
 }
