@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"PrediGroweeV2/auth/internal/models"
+	"auth/internal/models"
 	"database/sql"
 	"go.uber.org/zap"
 )
@@ -38,7 +38,7 @@ func (p *PostgresStorage) Close() error {
 
 func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
 	var userCreated models.User
-	err := p.db.QueryRow("INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id, email, first_name, last_name", user.FirstName, user.LastName, user.Email, user.Password).Scan(&userCreated.ID, &userCreated.Email, &userCreated.FirstName, &userCreated.LastName)
+	err := p.db.QueryRow("INSERT INTO users (first_name, last_name, email, pwd) VALUES ($1, $2, $3, $4) RETURNING id, email, first_name, last_name", user.FirstName, user.LastName, user.Email, user.Password).Scan(&userCreated.ID, &userCreated.Email, &userCreated.FirstName, &userCreated.LastName)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, password FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
 	if err != nil {
 		return nil, err
 	}

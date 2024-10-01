@@ -1,11 +1,12 @@
 package main
 
 import (
-	"PrediGroweeV2/auth/internal/api"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/api"
+	"auth/internal/storage"
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -27,7 +28,7 @@ func main() {
 	}(logger)
 
 	// Initialize database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", "localhost", "5432", "postgres", "postgres", "auth"))
+	db, err := connectToPostgres()
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
@@ -50,4 +51,18 @@ func main() {
 	postgresStorage := storage.NewPostgresStorage(db, logger)
 	apiServer := api.NewApiServer(":8080", postgresStorage, logger)
 	apiServer.Run()
+}
+func connectToPostgres() (*sql.DB, error) {
+	env := os.Getenv("ENV")
+	sslMode := "require"
+	if env == "local" {
+		sslMode = "disable"
+	}
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	connString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, user, password, dbName, sslMode)
+	return sql.Open("postgres", connString)
 }
