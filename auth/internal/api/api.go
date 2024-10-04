@@ -74,11 +74,11 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /auth/login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("GET /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
 	router.HandleFunc("POST /auth/verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
-	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
 }
 
-func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	if err := a.storage.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"status": "unhealthy"})

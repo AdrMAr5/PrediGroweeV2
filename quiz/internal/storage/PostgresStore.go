@@ -15,7 +15,7 @@ type Store interface {
 	CreateQuizSession(session models.QuizSession) (models.QuizSession, error)
 	GetQuizSessionByID(id int) (models.QuizSession, error)
 	UpdateQuizSession(session models.QuizSession) error
-	GetUserQuizSessions(userID int) ([]models.Question, error)
+	GetUserQuizSessions(userID int) ([]models.QuizSession, error)
 }
 
 type PostgresStorage struct {
