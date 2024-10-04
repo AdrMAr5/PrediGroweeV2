@@ -36,6 +36,7 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
+	// todo: uncomment this block after testing phase
 	//userSession, err := h.store.GetUserSession(dbUser.ID)
 	//if err == nil {
 	//	if userSession.Expiration.After(time.Now()) {
@@ -66,24 +67,15 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "session_id",
-		Value:    sessionId,
-		HttpOnly: true,
-		Secure:   false, // Set to true if using HTTPS
-		//SameSite: http.SameSiteStrictMode,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "access_token",
-		Value:    accessToken,
-		HttpOnly: true,
-		Secure:   false, // Set to true if using HTTPS
-		//SameSite: http.SameSiteStrictMode,
-		Expires: time.Now().Add(15 * time.Minute),
+		Path:  "/",
+		Name:  "session_id",
+		Value: sessionId,
+		//HttpOnly: true,
+		//Secure:   false, // Set to true if using HTTPS
+		//SameSite: http.SameSiteLaxMode,
 	})
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(map[string]string{"token": accessToken, "message": "Login successful"})
+	err = json.NewEncoder(w).Encode(map[string]string{"access_token": accessToken, "message": "Login successful"})
 	if err != nil {
 		h.logger.Error("Error encoding response", zap.Error(err))
 		return

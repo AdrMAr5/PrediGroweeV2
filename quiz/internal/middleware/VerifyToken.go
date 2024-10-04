@@ -30,6 +30,10 @@ func VerifyToken(next http.HandlerFunc, authClient *clients.AuthClient) http.Han
 	}
 }
 func ExtractAccessTokenFromRequest(r *http.Request) (string, error) {
+	authHeaderValue := r.Header.Get("Authorization")
+	if authHeaderValue != "" {
+		return authHeaderValue, nil
+	}
 	cookie, err := r.Cookie("access_token")
 	if err != nil {
 		return "", err

@@ -22,7 +22,7 @@ func NewGetQuestionHandler(store storage.Store, logger *zap.Logger) *GetQuestion
 	}
 }
 func (h *GetQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-	sessionId := r.PathValue("sessionId")
+	sessionId := r.PathValue("quizSessionId")
 	if sessionId == "" {
 		h.logger.Info("no session id provided")
 		http.Error(rw, "invalid session id", http.StatusBadRequest)
