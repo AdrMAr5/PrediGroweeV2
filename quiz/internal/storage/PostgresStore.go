@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"PrediGroweeV2/quiz/models"
 	"database/sql"
 	"go.uber.org/zap"
+	"quiz/models"
 )
 
 type Store interface {

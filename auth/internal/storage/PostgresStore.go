@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"PrediGroweeV2/auth/internal/models"
+	"auth/internal/models"
 	"database/sql"
 	"go.uber.org/zap"
 )

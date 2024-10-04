@@ -1,9 +1,9 @@
 package api
 
 import (
-	"PrediGroweeV2/auth/internal/handlers"
-	"PrediGroweeV2/auth/internal/middleware"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/handlers"
+	"auth/internal/middleware"
+	"auth/internal/storage"
 	"context"
 	"encoding/json"
 	"github.com/rs/cors"

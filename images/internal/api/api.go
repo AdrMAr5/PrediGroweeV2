@@ -1,13 +1,12 @@
 package api
 
 import (
-	"PrediGroweeV2/images/internal/clients"
-	"PrediGroweeV2/images/internal/handlers"
-	"PrediGroweeV2/images/internal/middleware"
-	"PrediGroweeV2/images/internal/storage"
+	""
 	"context"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
+	"images/internal/clients"
+	"images/internal/storage"
 	"net/http"
 	"os"
 	"os/signal"

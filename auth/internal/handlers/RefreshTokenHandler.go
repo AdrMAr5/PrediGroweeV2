@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"PrediGroweeV2/auth/internal/auth"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/auth"
+	"auth/internal/storage"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"

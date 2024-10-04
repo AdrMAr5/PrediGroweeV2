@@ -1,13 +1,13 @@
 package main
 
 import (
-	"PrediGroweeV2/images/internal/api"
-	"PrediGroweeV2/images/internal/clients"
-	"PrediGroweeV2/images/internal/storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+	"images/internal/api"
+	"images/internal/clients"
+	"images/internal/storage"
 	"log"
 	"time"
 )

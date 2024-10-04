@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"PrediGroweeV2/quiz/internal/storage"
 	"go.uber.org/zap"
 	"net/http"
+	"quiz/internal/storage"
 )
 
 type GetQuestionHandler struct {

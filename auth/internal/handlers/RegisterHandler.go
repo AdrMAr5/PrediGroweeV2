@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"PrediGroweeV2/auth/internal/auth"
-	"PrediGroweeV2/auth/internal/models"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/auth"
+	"auth/internal/models"
+	"auth/internal/storage"
 	"encoding/json"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"

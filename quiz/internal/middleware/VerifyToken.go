@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"PrediGroweeV2/quiz/internal/clients"
 	"log"
 	"net/http"
+	"quiz/internal/clients"
 )
 
 func VerifyToken(next http.HandlerFunc, authClient *clients.AuthClient) http.HandlerFunc {

@@ -1,16 +1,16 @@
 package api
 
 import (
-	"PrediGroweeV2/quiz/handlers"
-	"PrediGroweeV2/quiz/internal/clients"
-	"PrediGroweeV2/quiz/internal/middleware"
-	"PrediGroweeV2/quiz/internal/storage"
 	"context"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
+	"quiz/handlers"
+	"quiz/internal/clients"
+	"quiz/internal/middleware"
+	"quiz/internal/storage"
 	"syscall"
 	"time"
 )

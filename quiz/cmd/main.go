@@ -1,14 +1,14 @@
 package main
 
 import (
-	"PrediGroweeV2/quiz/internal/api"
-	"PrediGroweeV2/quiz/internal/clients"
-	"PrediGroweeV2/quiz/internal/storage"
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
+	"quiz/internal/api"
+	"quiz/internal/clients"
+	"quiz/internal/storage"
 	"time"
 )
 

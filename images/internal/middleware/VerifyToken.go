@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"PrediGroweeV2/images/internal/clients"
+	"images/internal/clients"
 	"log"
 	"net/http"
 )

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"PrediGroweeV2/auth/internal/api"
-	"PrediGroweeV2/auth/internal/storage"
+	"auth/internal/api"
+	"auth/internal/storage"
 	"database/sql"
 	"fmt"
 	"log"
