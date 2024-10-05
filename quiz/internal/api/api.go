@@ -70,9 +70,10 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /quiz/{quizSessionId}/nextQuestion", middleware.VerifyToken(handlers.NewGetNextQuestionHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("GET /quiz/{quizSessionId}/question/{id}", middleware.VerifyToken(handlers.NewGetQuestionHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("POST /quiz/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("GET /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("GET /quiz/sessions", middleware.VerifyToken(handlers.NewGetUserSessionsHandler(a.storage, a.logger).Handle, a.authClient))
 }

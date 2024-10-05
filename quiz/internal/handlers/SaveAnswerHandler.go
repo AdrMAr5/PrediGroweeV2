@@ -42,5 +42,6 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		// todo: handle return correct answer
 		rw.WriteHeader(http.StatusOK)
 	}
+	// todo: implement storing answers
 	rw.WriteHeader(http.StatusOK)
 }

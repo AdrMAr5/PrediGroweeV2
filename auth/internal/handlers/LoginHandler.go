@@ -72,8 +72,6 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Value:    sessionId,
 		HttpOnly: true,
 		Secure:   false, // Set to true if using HTTPS
-		//SameSite: http.SameSiteStrictMode,
-	})
 	})
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(map[string]string{"access_token": accessToken, "message": "Login successful"})

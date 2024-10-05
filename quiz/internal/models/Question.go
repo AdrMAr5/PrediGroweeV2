@@ -1,5 +1,10 @@
 package models
 
+import (
+	"encoding/json"
+	"io"
+)
+
 type Question struct {
 	ID          int
 	Question    string
@@ -18,4 +23,8 @@ type PatientAges struct {
 type Parameter struct {
 	Name  string
 	Value float64
+}
+
+func (q *Question) ToJSON(w io.Writer) error {
+	return json.NewEncoder(w).Encode(q)
 }
