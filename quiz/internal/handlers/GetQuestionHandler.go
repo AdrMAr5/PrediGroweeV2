@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
@@ -76,11 +75,10 @@ func (h *GetQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	// todo: query image urls from images service
 
 	rw.Header().Set("Content-Type", "application/json")
-	response := map[string]interface{}{
-		"question": question,
-	}
-	if err := json.NewEncoder(rw).Encode(response); err != nil {
-		http.Error(rw, "internal server error", http.StatusInternalServerError)
+	err = question.ToJSON(rw)
+	if err != nil {
+		http.Error(rw, "failed to get question", http.StatusInternalServerError)
 		return
 	}
+	rw.WriteHeader(http.StatusOK)
 }
