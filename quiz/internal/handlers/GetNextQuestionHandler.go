@@ -55,16 +55,9 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		rw.WriteHeader(http.StatusNoContent)
 		return
 	}
-	nextQuestionID := session.CurrentQuestionID%2 + 1
-	question, err := h.storage.GetQuestionByID(nextQuestionID)
+	question, err := h.storage.GetQuestionByID(session.CurrentQuestionID%2 + 1)
 	if err != nil {
 		http.Error(rw, "failed to get question", http.StatusNotFound)
-		return
-	}
-	session.CurrentQuestionID = session.CurrentQuestionID + 1
-	err = h.storage.UpdateQuizSession(session)
-	if err != nil {
-		http.Error(rw, "failed to get question", http.StatusInternalServerError)
 		return
 	}
 	err = question.ToJSON(rw)
@@ -72,5 +65,4 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		http.Error(rw, "failed to get question", http.StatusInternalServerError)
 		return
 	}
-	rw.WriteHeader(http.StatusOK)
 }

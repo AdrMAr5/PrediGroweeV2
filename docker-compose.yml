@@ -12,6 +12,54 @@ services:
       - images
       - quiz
 
+  # Postgres for Auth
+  auth_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=auth_user
+      - POSTGRES_PASSWORD=auth_password
+      - POSTGRES_DB=auth_db
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Different port for local development
+
+  # Postgres for Images
+  images_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=images_user
+      - POSTGRES_PASSWORD=images_password
+      - POSTGRES_DB=images_db
+    volumes:
+      - images_db_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"  # Different port for local development
+
+  # Postgres for Quiz
+  quiz_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=quiz_user
+      - POSTGRES_PASSWORD=quiz_password
+      - POSTGRES_DB=quiz_db
+    volumes:
+      - quiz_db_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"  # Different port for local development
+
+  # Postgres for Stats
+  stats_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=stats_user
+      - POSTGRES_PASSWORD=stats_password
+      - POSTGRES_DB=stats_db
+    volumes:
+      - stats_db_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"  # Different port for local development
+
   # Auth microservice
   auth:
     build:
@@ -63,43 +111,23 @@ services:
     depends_on:
       - quiz_db
 
-  # Postgres for Auth
-  auth_db:
-    image: postgres:13
+  stats:
+    build:
+        context: ./stats
+        dockerfile: Dockerfile
+    expose:
+      - "8080"
     environment:
-      - POSTGRES_USER=auth_user
-      - POSTGRES_PASSWORD=auth_password
-      - POSTGRES_DB=auth_db
-    volumes:
-      - auth_db_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"  # Different port for local development
-
-  # Postgres for Images
-  images_db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=images_user
-      - POSTGRES_PASSWORD=images_password
-      - POSTGRES_DB=images_db
-    volumes:
-      - images_db_data:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"  # Different port for local development
-
-  # Postgres for Quiz
-  quiz_db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=quiz_user
-      - POSTGRES_PASSWORD=quiz_password
-      - POSTGRES_DB=quiz_db
-    volumes:
-      - quiz_db_data:/var/lib/postgresql/data
-    ports:
-      - "5435:5432"  # Different port for local development
-
+      - DB_HOST=stats_db
+      - DB_PORT=5432
+      - DB_USER=stats_user
+      - DB_PASSWORD=stats_password
+      - DB_NAME=stats_db
+      - ENV=local
+    depends_on:
+        - stats_db
 volumes:
   auth_db_data:
   images_db_data:
   quiz_db_data:
+  stats_db_data:

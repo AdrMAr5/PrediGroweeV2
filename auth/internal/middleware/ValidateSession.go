@@ -11,7 +11,7 @@ import (
 
 func ValidateSession(next http.HandlerFunc, storage storage.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, err := auth.ExtractSessionIDFromRequest(r)
+		sessionID, err := auth.ExtractSessionIdFromCookie(r)
 		log.Println(sessionID)
 		if err != nil {
 			log.Println("Failed to extract session ID", err)
@@ -29,7 +29,15 @@ func ValidateSession(next http.HandlerFunc, storage storage.Store) http.HandlerF
 			http.Error(w, "Session expired. Please log in", http.StatusUnauthorized)
 			return
 		}
+		user, err := storage.GetUserById(session.UserID)
+		if err != nil {
+			log.Printf("Failed to get user from storage: %v", err)
+			http.Error(w, "User not found", http.StatusUnauthorized)
+			return
+		}
+		log.Printf("User found: %+v", user)
 		newCtx := context.WithValue(r.Context(), "user_id", session.UserID)
+		newCtx = context.WithValue(newCtx, "user_role", user.Role)
 		next(w, r.WithContext(newCtx))
 	}
 }

@@ -2,17 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 )
 
-type VerifyTokenHandler struct {
+type VerifySessionHandler struct {
+	logger *zap.Logger
 }
 
-func NewVerifyTokenHandler() *VerifyTokenHandler {
-	return &VerifyTokenHandler{}
+func NewVerifySessionHandler(logger *zap.Logger) *VerifySessionHandler {
+	return &VerifySessionHandler{
+		logger: logger,
+	}
 }
-func (h *VerifyTokenHandler) Handle(rw http.ResponseWriter, r *http.Request) {
+
+func (h *VerifySessionHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id")
 	userRole := r.Context().Value("user_role")
 
@@ -29,6 +34,4 @@ func (h *VerifyTokenHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	log.Println("VerifyTokenHandler completed successfully")
 }

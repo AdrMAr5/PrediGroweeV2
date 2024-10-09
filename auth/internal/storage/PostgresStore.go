@@ -47,7 +47,7 @@ func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd, role FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Role)
 	if err != nil {
 		return nil, err
 	}

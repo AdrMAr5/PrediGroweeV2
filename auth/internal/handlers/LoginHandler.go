@@ -74,7 +74,8 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Secure:   false, // Set to true if using HTTPS
 	})
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(map[string]string{"access_token": accessToken, "message": "Login successful"})
+	data := map[string]interface{}{"user_id": dbUser.ID, "role": dbUser.Role, "access_token": accessToken}
+	err = json.NewEncoder(w).Encode(data)
 	if err != nil {
 		h.logger.Error("Error encoding response", zap.Error(err))
 		return

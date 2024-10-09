@@ -7,31 +7,29 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"quiz/internal/clients"
-	"quiz/internal/handlers"
-	"quiz/internal/middleware"
-	"quiz/internal/storage"
+	"stats/internal/clients"
+	"stats/internal/handlers"
+	"stats/internal/storage"
 	"syscall"
 	"time"
 )
 
 type ApiServer struct {
-	addr        string
-	storage     storage.Store
-	logger      *zap.Logger
-	authClient  *clients.AuthClient
-	statsClient *clients.StatsClient
+	addr       string
+	authClient *clients.AuthClient
+	storage    storage.Storage
+	logger     *zap.Logger
 }
 
-func NewApiServer(addr string, store storage.Store, logger *zap.Logger, authClient *clients.AuthClient, statsClient *clients.StatsClient) *ApiServer {
+func NewApiServer(addr string, storage storage.Storage, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
 	return &ApiServer{
-		addr:        addr,
-		storage:     store,
-		logger:      logger,
-		authClient:  authClient,
-		statsClient: statsClient,
+		addr:       addr,
+		authClient: authClient,
+		storage:    storage,
+		logger:     logger,
 	}
 }
+
 func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
@@ -72,10 +70,9 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /quiz/{quizSessionId}/nextQuestion", middleware.VerifyToken(handlers.NewGetNextQuestionHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("GET /quiz/{quizSessionId}/question/{id}", middleware.VerifyToken(handlers.NewGetQuestionHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("GET /quiz/sessions", middleware.VerifyToken(handlers.NewGetUserSessionsHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("/health", func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+	mux.HandleFunc("POST /stats/saveResponse", handlers.NewSaveResponseHandler(a.storage, a.logger).Handle)
+
 }

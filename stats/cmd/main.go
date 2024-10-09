@@ -7,9 +7,10 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"os"
-	"quiz/internal/api"
-	"quiz/internal/clients"
-	"quiz/internal/storage"
+	"stats/internal/api"
+	"stats/internal/clients"
+	"stats/internal/storage"
+
 	"time"
 )
 
@@ -50,8 +51,7 @@ func main() {
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
 	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
-	statsClient := clients.NewStatsClient("http://stats:8080/stats", logger)
-	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient, statsClient)
+	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient)
 	apiServer.Run()
 }
 func connectToPostgres() (*sql.DB, error) {

@@ -30,7 +30,6 @@ func GenerateAccessToken(userID string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 func ExtractAccessTokenFromRequest(r *http.Request) (string, error) {
-	// First, check the Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader != "" {
 		splitToken := strings.Split(authHeader, "Bearer ")
@@ -38,8 +37,6 @@ func ExtractAccessTokenFromRequest(r *http.Request) (string, error) {
 			return splitToken[1], nil
 		}
 	}
-
-	// If not in the header, check the cookie
 	cookie, err := r.Cookie("access_token")
 	if err == nil && cookie.Value != "" {
 		return cookie.Value, nil
@@ -47,7 +44,7 @@ func ExtractAccessTokenFromRequest(r *http.Request) (string, error) {
 
 	return "", fmt.Errorf("no valid access token found")
 }
-func ExtractSessionIDFromRequest(r *http.Request) (string, error) {
+func ExtractSessionIdFromCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		return "", err

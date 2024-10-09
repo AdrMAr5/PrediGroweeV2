@@ -16,6 +16,7 @@ type Store interface {
 	GetQuizSessionByID(id int) (models.QuizSession, error)
 	UpdateQuizSession(session models.QuizSession) error
 	GetUserQuizSessions(userID int) ([]models.QuizSession, error)
+	CountQuestions() (int, error)
 }
 
 type PostgresStorage struct {
@@ -129,4 +130,12 @@ func (p *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
 		WHERE id = $5`,
 		session.Status, session.CurrentQuestionID, time.Now(), session.FinishedAt, session.ID)
 	return err
+}
+func (p *PostgresStorage) CountQuestions() (int, error) {
+	var count int
+	err := p.db.QueryRow("SELECT COUNT(*) FROM questions").Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

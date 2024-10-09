@@ -28,3 +28,12 @@ type Parameter struct {
 func (q *Question) ToJSON(w io.Writer) error {
 	return json.NewEncoder(w).Encode(q)
 }
+
+type QuestionAnswer struct {
+	QuestionID    int
+	UserID        int
+	SessionID     int
+	Answer        string
+	IsFirstAnswer bool
+	IsLastAnswer  bool
+}

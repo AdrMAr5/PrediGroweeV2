@@ -81,19 +81,11 @@ func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Secure:   false, // Set to true if using HTTPS
 		SameSite: http.SameSiteStrictMode,
 	})
-	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "access_token",
-		Value:    accessToken,
-		HttpOnly: true,
-		Secure:   false, // Set to true if using HTTPS
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Now().Add(15 * time.Minute),
-	})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	response := map[string]interface{}{
-		"user": userCreated,
+		"user":         userCreated,
+		"access_token": accessToken,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error("Error writing response", zap.Error(err))

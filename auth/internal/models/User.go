@@ -6,13 +6,20 @@ import (
 	"io"
 )
 
+type UserRole string
+
+const (
+	RoleAdmin UserRole = "admin"
+	RoleUser  UserRole = "user"
+)
+
 type User struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email" validate:"required,email"`
-	Password  string `json:"password,omitempty" validate:"required"`
-	Role      string `json:"role"`
+	ID        int      `json:"id"`
+	FirstName string   `json:"first_name"`
+	LastName  string   `json:"last_name"`
+	Email     string   `json:"email" validate:"required,email"`
+	Password  string   `json:"password,omitempty" validate:"required"`
+	Role      UserRole `json:"role"`
 }
 
 func (u *User) Validate() error {
