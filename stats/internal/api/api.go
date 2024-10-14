@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"stats/internal/clients"
 	"stats/internal/handlers"
+	"stats/internal/middleware"
 	"stats/internal/storage"
 	"syscall"
 	"time"
@@ -73,6 +74,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/health", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	mux.HandleFunc("POST /stats/saveResponse", handlers.NewSaveResponseHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("POST /stats/saveResponse", middleware.VerifyToken(handlers.NewSaveResponseHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
 
 }
