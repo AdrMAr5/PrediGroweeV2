@@ -36,11 +36,16 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "invalid quiz session id", http.StatusBadRequest)
 		return
 	}
+
 	session, err := h.storage.GetQuizSessionByID(quizSessionID)
 	if err != nil {
 		h.logger.Error("failed to get quiz session from db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
+	}
+	userID := r.Context().Value("user_id").(int)
+	if userID != session.UserID {
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
 	}
 	if session.Mode == models.QuizModeEducational {
 		// todo: handle return correct answer
