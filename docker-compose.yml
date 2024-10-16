@@ -68,7 +68,7 @@ services:
       - POSTGRES_PASSWORD=admin_password
       - POSTGRES_DB=admin_db
     volumes:
-      - stats_db_data:/var/lib/postgresql/data
+      - admin_db_data:/var/lib/postgresql/data
     ports:
       - "5437:5432"  # Different port for local development
 
@@ -141,7 +141,7 @@ services:
         - stats_db
   admin:
     build:
-      context: ./stats
+      context: ./admin
       dockerfile: Dockerfile
     expose:
       - "8080"
