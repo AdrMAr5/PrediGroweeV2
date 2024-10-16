@@ -60,6 +60,19 @@ services:
     ports:
       - "5436:5432"  # Different port for local development
 
+  # Postgres for admin
+  admin_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=admin_user
+      - POSTGRES_PASSWORD=admin_password
+      - POSTGRES_DB=admin_db
+    volumes:
+      - admin_db_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"  # Different port for local development
+
+
   # Auth microservice
   auth:
     build:
@@ -126,8 +139,24 @@ services:
       - ENV=local
     depends_on:
         - stats_db
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      - DB_HOST=admin_db
+      - DB_PORT=5432
+      - DB_USER=admin_user
+      - DB_PASSWORD=admin_password
+      - DB_NAME=admin_db
+      - ENV=local
+    depends_on:
+      - admin_db
 volumes:
   auth_db_data:
   images_db_data:
   quiz_db_data:
   stats_db_data:
+  admin_db_data:

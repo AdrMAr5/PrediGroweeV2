@@ -30,6 +30,19 @@ func (h *SaveResponseHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	_, err = h.storage.GetSession(response.SessionID)
+	if err == storage.ErrSessionNotFound {
+		err = h.storage.SaveSession(&models.QuizSession{
+			SessionID: response.SessionID,
+			UserID:    response.UserID,
+			QuizMode:  "educational",
+		})
+		if err != nil {
+			h.logger.Error("failed to save session", zap.Error(err))
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
 	err = h.storage.SaveResponse(&response)
 	rw.WriteHeader(http.StatusOK)
 }

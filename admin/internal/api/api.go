@@ -1,36 +1,36 @@
 package api
 
 import (
+	"admin/clients"
+	"admin/internal/handlers"
+	"admin/internal/storage"
 	"context"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
-	"stats/internal/clients"
-	"stats/internal/handlers"
-	"stats/internal/middleware"
-	"stats/internal/storage"
 	"syscall"
 	"time"
 )
 
 type ApiServer struct {
-	addr       string
-	authClient *clients.AuthClient
-	storage    storage.Storage
-	logger     *zap.Logger
+	addr        string
+	storage     storage.Storage
+	logger      *zap.Logger
+	authClient  *clients.AuthClient
+	statsClient *clients.StatsClient
 }
 
-func NewApiServer(addr string, storage storage.Storage, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
+func NewApiServer(addr string, store storage.Storage, logger *zap.Logger, authClient *clients.AuthClient, statsClient *clients.StatsClient) *ApiServer {
 	return &ApiServer{
-		addr:       addr,
-		authClient: authClient,
-		storage:    storage,
-		logger:     logger,
+		addr:        addr,
+		storage:     store,
+		logger:      logger,
+		authClient:  authClient,
+		statsClient: statsClient,
 	}
 }
-
 func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
@@ -71,10 +71,5 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/health", func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	})
-	mux.HandleFunc("POST /stats/saveResponse", middleware.VerifyToken(handlers.NewSaveResponseHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
-
+	mux.HandleFunc("GET /admin/allStats", handlers.NewAllStatsHandler(a.storage, a.logger).Handle)
 }
