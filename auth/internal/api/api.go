@@ -77,6 +77,16 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /auth/verifySession", middleware.ValidateSession(handlers.NewVerifySessionHandler(a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
+
+	// admin
+	router.HandleFunc("GET /auth/users", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewGetAllUsersHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("PUT /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewUpdateUserHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("DELETE /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewDeleteUserHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("GET /auth/roles", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewGetAllRolesHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("POST /auth/roles", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewCreateRoleHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("PUT /auth/roles/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewUpdateRoleHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+	router.HandleFunc("DELETE /auth/roles/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(middleware.WithAdminRole(handlers.NewDeleteRoleHandler(a.storage, a.logger).Handle), a.storage), a.storage))
+
 }
 
 func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, _ *http.Request) {

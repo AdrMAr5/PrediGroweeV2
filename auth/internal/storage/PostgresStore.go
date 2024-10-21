@@ -3,6 +3,7 @@ package storage
 import (
 	"auth/internal/models"
 	"database/sql"
+	"fmt"
 	"go.uber.org/zap"
 )
 
@@ -16,6 +17,13 @@ type Store interface {
 	GetUserSession(userID int) (models.UserSession, error)
 	UpdateUserSession(token models.UserSession) error
 	GetUserSessionBySessionID(sessionID string) (models.UserSession, error)
+	GetAllUsers() ([]models.User, error)
+	UpdateUser(user models.User) error
+	DeleteUser(id int) error
+	GetAllRoles() ([]models.Role, error)
+	CreateRole(role models.Role) (models.Role, error)
+	UpdateRole(role models.Role) error
+	DeleteRole(id int) error
 }
 type FirestoreStorage struct {
 	config string
@@ -80,4 +88,105 @@ func (p *PostgresStorage) GetUserSessionBySessionID(sessionID string) (models.Us
 	var session models.UserSession
 	err := p.db.QueryRow("SELECT user_id, session_id, expiration FROM users_sessions WHERE session_id = $1", sessionID).Scan(&session.UserID, &session.SessionID, &session.Expiration)
 	return session, err
+}
+
+func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
+	rows, err := p.db.Query("SELECT id, email, first_name, last_name, role FROM users")
+	if err != nil {
+		return nil, fmt.Errorf("error fetching users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.Role)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning user: %w", err)
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error with rows iteration: %w", err)
+	}
+
+	return users, nil
+}
+
+func (p *PostgresStorage) UpdateUser(user models.User) error {
+	query := `
+        UPDATE users 
+        SET first_name = $1, last_name = $2, email = $3, role = $4, pwd = $5, updated_at = NOW()
+        WHERE id = $6
+    `
+	_, err := p.db.Exec(query, user.FirstName, user.LastName, user.Email, user.Role, user.Password, user.ID)
+	if err != nil {
+		return fmt.Errorf("error updating user: %w", err)
+	}
+
+	return nil
+}
+
+func (p *PostgresStorage) DeleteUser(id int) error {
+	_, err := p.db.Exec("DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("error deleting user: %w", err)
+	}
+
+	return nil
+}
+
+func (p *PostgresStorage) GetAllRoles() ([]models.Role, error) {
+	rows, err := p.db.Query("SELECT id, name FROM roles")
+	if err != nil {
+		return nil, fmt.Errorf("error fetching roles: %w", err)
+	}
+	defer rows.Close()
+
+	var roles []models.Role
+	for rows.Next() {
+		var role models.Role
+		err := rows.Scan(&role.ID, &role.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning role: %w", err)
+		}
+		roles = append(roles, role)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error with rows iteration: %w", err)
+	}
+
+	return roles, nil
+}
+
+func (p *PostgresStorage) CreateRole(role models.Role) (models.Role, error) {
+	query := "INSERT INTO roles (name) VALUES ($1) RETURNING id, name"
+	var newRole models.Role
+	err := p.db.QueryRow(query, role.Name).Scan(&newRole.ID, &newRole.Name)
+	if err != nil {
+		return models.Role{}, fmt.Errorf("error creating role: %w", err)
+	}
+
+	return newRole, nil
+}
+
+func (p *PostgresStorage) UpdateRole(role models.Role) error {
+	query := "UPDATE roles SET name = $1 WHERE id = $2"
+	_, err := p.db.Exec(query, role.Name, role.ID)
+	if err != nil {
+		return fmt.Errorf("error updating role: %w", err)
+	}
+
+	return nil
+}
+
+func (p *PostgresStorage) DeleteRole(id int) error {
+	_, err := p.db.Exec("DELETE FROM roles WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("error deleting role: %w", err)
+	}
+
+	return nil
 }
