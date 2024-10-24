@@ -31,15 +31,5 @@ func (h *LogOutHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("Error updating session", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		HttpOnly: true,
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    "",
-		HttpOnly: true,
-	})
 	w.WriteHeader(http.StatusOK)
 }

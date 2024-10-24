@@ -7,21 +7,21 @@ import (
 	"quiz/internal/storage"
 )
 
-type GetUserSessionsHandler struct {
+type GetUserActiveSessionsHandler struct {
 	storage storage.Store
 	logger  *zap.Logger
 }
 
-func NewGetUserSessionsHandler(store storage.Store, logger *zap.Logger) *GetUserSessionsHandler {
-	return &GetUserSessionsHandler{
+func NewGetUserActiveSessionsHandler(store storage.Store, logger *zap.Logger) *GetUserActiveSessionsHandler {
+	return &GetUserActiveSessionsHandler{
 		storage: store,
 		logger:  logger,
 	}
 }
 
-func (h *GetUserSessionsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
+func (h *GetUserActiveSessionsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(int)
-	sessions, err := h.storage.GetUserQuizSessions(userID)
+	sessions, err := h.storage.GetUserActiveQuizSessions(userID)
 	if err != nil {
 		h.logger.Error("failed to get user sessions from db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
@@ -36,5 +36,5 @@ func (h *GetUserSessionsHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	//rw.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusOK)
 }
