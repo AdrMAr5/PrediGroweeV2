@@ -17,8 +17,8 @@ type User struct {
 	ID        int      `json:"id"`
 	FirstName string   `json:"first_name"`
 	LastName  string   `json:"last_name"`
-	Email     string   `json:"email" validate:"required,email"`
-	Password  string   `json:"password,omitempty" validate:"required"`
+	Email     string   `json:"email" validate:"email"`
+	Password  string   `json:"password,omitempty"`
 	Role      UserRole `json:"role"`
 }
 
@@ -49,4 +49,17 @@ type UserResponse struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
+}
+
+type UserUpdatePayload struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Pwd       *string `json:"pwd"`
+}
+
+func (u *UserUpdatePayload) FromJSON(r io.Reader) error {
+	return json.NewDecoder(r).Decode(u)
+}
+func (u *UserUpdatePayload) ToJSON(w io.Writer) error {
+	return json.NewEncoder(w).Encode(u)
 }
