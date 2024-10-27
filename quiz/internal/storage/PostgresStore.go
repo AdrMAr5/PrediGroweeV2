@@ -201,24 +201,6 @@ func (s *PostgresStorage) GetQuestionOptions(id int) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	// todo: add answers
-	question.Answers = make([]string, 0)
-
-	// Get case parameters
-	question.Case.Parameters, question.Case.ParameterValues, err = s.getCaseParameters(question.Case.ID)
-	if err != nil {
-		return question, err
-	}
-
-	return question, nil
-}
-func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
-	query := `
-				SELECT q.id, q.question, q.prediction_age,
-               c.id, c.code, c.patient_gender, c.age1, c.age2
-        FROM questions q
-        JOIN cases c ON q.case_id = c.id`
-
 	var options []string
 	for rows.Next() {
 		var option string
