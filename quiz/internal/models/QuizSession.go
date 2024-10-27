@@ -1,14 +1,22 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"io"
+	"time"
+)
 
 type QuizSession struct {
 	ID                int
-	Mode              QuizMode
 	UserID            int
-	CurrentQuestionID int
+	Mode              QuizMode
 	Status            QuizStatus
+	CurrentQuestionID int
 	CreatedAt         *time.Time
 	UpdatedAt         *time.Time
 	FinishedAt        *time.Time
+}
+
+func (qs *QuizSession) ToJSON(writer io.Writer) error {
+	return json.NewEncoder(writer).Encode(qs)
 }

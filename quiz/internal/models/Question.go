@@ -6,27 +6,33 @@ import (
 )
 
 type Question struct {
-	ID          int
-	Question    string
-	PatientCode string
-	Gender      string
-	Ages        PatientAges
-	Images      map[int]string
-	Parameters  map[int][]Parameter
-}
-type PatientAges struct {
-	Age1          int
-	Age2          int
-	PredictionAge int
-}
-
-type Parameter struct {
-	Name  string
-	Value float64
+	ID            int      `json:"id"`
+	Question      string   `json:"question"`
+	Answers       []string `json:"answers"`
+	PredictionAge int      `json:"prediction_age"`
+	Case          Case     `json:"case"`
 }
 
 func (q *Question) ToJSON(w io.Writer) error {
 	return json.NewEncoder(w).Encode(q)
+}
+func (q *Question) FromJSON(r io.Reader) error {
+	return json.NewDecoder(r).Decode(q)
+}
+
+type QuestionPayload struct {
+	ID            int      `json:"id,omitempty"`
+	Question      string   `json:"question"`
+	Answers       []string `json:"answers"`
+	PredictionAge int      `json:"prediction_age"`
+	CaseID        int      `json:"case_id"`
+}
+
+func (q *QuestionPayload) ToJSON(w io.Writer) error {
+	return json.NewEncoder(w).Encode(q)
+}
+func (q *QuestionPayload) FromJSON(r io.Reader) error {
+	return json.NewDecoder(r).Decode(q)
 }
 
 type QuestionAnswer struct {

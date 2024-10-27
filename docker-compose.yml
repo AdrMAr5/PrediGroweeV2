@@ -11,6 +11,8 @@ services:
       - auth
       - images
       - quiz
+      - stats
+      - admin
 
   # Postgres for Auth
   auth_db:

@@ -3,7 +3,6 @@ package handlers
 import (
 	"auth/internal/models"
 	"auth/internal/storage"
-	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -28,19 +27,45 @@ func (h *UpdateUserHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "invalid user id", http.StatusBadRequest)
 		return
 	}
-
-	var updatedUser models.User
-	if err := json.NewDecoder(r.Body).Decode(&updatedUser); err != nil {
-		http.Error(rw, "invalid request payload", http.StatusBadRequest)
+	if r.Context().Value("user_id") != userID {
+		http.Error(rw, "forbidden", http.StatusForbidden)
 		return
 	}
 
-	updatedUser.ID = userID
-	if err := h.storage.UpdateUser(updatedUser); err != nil {
+	var userPayload models.UserUpdatePayload
+	if err := userPayload.FromJSON(r.Body); err != nil {
+		http.Error(rw, "invalid request payload", http.StatusBadRequest)
+		return
+	}
+	dbUser, err := h.storage.GetUserById(userID)
+	if err != nil {
+		h.logger.Error("failed to get user", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	userToUpdate := applyUpdates(dbUser, &userPayload)
+
+	if err := h.storage.UpdateUser(userToUpdate); err != nil {
 		h.logger.Error("failed to update user", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	rw.WriteHeader(http.StatusOK)
+}
+
+func applyUpdates(existing *models.User, updates *models.UserUpdatePayload) *models.User {
+	result := existing
+
+	if updates.FirstName != nil {
+		result.FirstName = *updates.FirstName
+	}
+	if updates.LastName != nil {
+		result.LastName = *updates.LastName
+	}
+	if updates.Pwd != nil {
+		result.Password = *updates.Pwd
+	}
+
+	return result
 }

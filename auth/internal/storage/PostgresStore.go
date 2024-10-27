@@ -18,7 +18,7 @@ type Store interface {
 	UpdateUserSession(token models.UserSession) error
 	GetUserSessionBySessionID(sessionID string) (models.UserSession, error)
 	GetAllUsers() ([]models.User, error)
-	UpdateUser(user models.User) error
+	UpdateUser(user *models.User) error
 	DeleteUser(id int) error
 	GetAllRoles() ([]models.Role, error)
 	CreateRole(role models.Role) (models.Role, error)
@@ -91,7 +91,7 @@ func (p *PostgresStorage) GetUserSessionBySessionID(sessionID string) (models.Us
 }
 
 func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
-	rows, err := p.db.Query("SELECT id, email, first_name, last_name, role FROM users")
+	rows, err := p.db.Query("SELECT id, email, first_name, last_name, role FROM users ORDER BY id")
 	if err != nil {
 		return nil, fmt.Errorf("error fetching users: %w", err)
 	}
@@ -114,7 +114,7 @@ func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (p *PostgresStorage) UpdateUser(user models.User) error {
+func (p *PostgresStorage) UpdateUser(user *models.User) error {
 	query := `
         UPDATE users 
         SET first_name = $1, last_name = $2, email = $3, role = $4, pwd = $5, updated_at = NOW()

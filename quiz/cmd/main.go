@@ -38,6 +38,7 @@ func main() {
 			logger.Fatal("Failed to close database connection: %v", zap.Error(err))
 		}
 	}(db)
+	logger.Info("Connected to database")
 
 	// Set up database connection pool
 	db.SetMaxOpenConns(25)
@@ -50,7 +51,9 @@ func main() {
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
 	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
+	logger.Info("Connected to auth service")
 	statsClient := clients.NewStatsClient("http://stats:8080/stats", logger)
+	logger.Info("Connected to stats service")
 	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient, statsClient)
 	apiServer.Run()
 }
