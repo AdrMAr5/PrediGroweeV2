@@ -1,24 +1,25 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
+	"quiz/internal/clients"
 	"quiz/internal/models"
 	"quiz/internal/storage"
 )
 
 type StartQuizHandler struct {
-	storage storage.Store
-	logger  *zap.Logger
+	storage     storage.Store
+	logger      *zap.Logger
+	statsClient *clients.StatsClient
 }
 
-func NewStartQuizHandler(store storage.Store, logger *zap.Logger) *StartQuizHandler {
+func NewStartQuizHandler(store storage.Store, logger *zap.Logger, client *clients.StatsClient) *StartQuizHandler {
 	return &StartQuizHandler{
-		storage: store,
-		logger:  logger,
+		storage:     store,
+		logger:      logger,
+		statsClient: client,
 	}
 }
 
@@ -35,15 +36,20 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	quizSession := models.QuizSession{
-		Mode:   payload.Mode,
-		UserID: userID,
-		Status: models.QuizStatusNotStarted,
+		Mode:              payload.Mode,
+		UserID:            userID,
+		Status:            models.QuizStatusNotStarted,
+		CurrentQuestionID: 1,
 	}
 	sessionCreated, err := h.storage.CreateQuizSession(quizSession)
 	if err != nil {
 		h.logger.Error("failed to create quiz session in db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
+	}
+	err = h.statsClient.SaveSession(sessionCreated)
+	if err != nil {
+		h.logger.Error("failed to save session in stats service", zap.Error(err))
 	}
 	rw.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
@@ -54,13 +60,4 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	rw.WriteHeader(http.StatusCreated)
-}
-func generateSessionID(length int) (string, error) {
-	bytes := make([]byte, length)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
 }

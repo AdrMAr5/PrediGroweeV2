@@ -8,7 +8,7 @@ import (
 type Question struct {
 	ID            int      `json:"id"`
 	Question      string   `json:"question"`
-	Answers       []string `json:"answers"`
+	Options       []string `json:"options"`
 	PredictionAge int      `json:"prediction_age"`
 	Case          Case     `json:"case"`
 }
@@ -36,10 +36,7 @@ func (q *QuestionPayload) FromJSON(r io.Reader) error {
 }
 
 type QuestionAnswer struct {
-	QuestionID    int
-	UserID        int
-	SessionID     int
-	Answer        string
-	IsFirstAnswer bool
-	IsLastAnswer  bool
+	QuestionID int    `json:"question_id"`
+	Answer     string `json:"answer"`
+	IsCorrect  bool   `json:"is_correct"`
 }

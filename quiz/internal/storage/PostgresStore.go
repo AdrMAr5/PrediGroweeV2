@@ -23,6 +23,8 @@ type Store interface {
 	UpdateQuestionByID(questionID int, updatedCase models.QuestionPayload) (models.QuestionPayload, error)
 	DeleteQuestionByID(id int) error
 	CountQuestions() (int, error)
+	GetQuestionOptions(id int) ([]string, error)
+	GetQuestionCorrectOption(id int) (string, error)
 
 	// cases
 	CreateCase(newCase models.Case) (models.Case, error)
@@ -175,16 +177,53 @@ func (s *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
 	if err != nil {
 		return question, err
 	}
-	// todo: add answers
-	question.Answers = make([]string, 0)
 
-	// Get case parameters
+	question.Options, err = s.GetQuestionOptions(id)
+	if err != nil {
+		return question, err
+	}
+
 	question.Case.Parameters, question.Case.ParameterValues, err = s.getCaseParameters(question.Case.ID)
 	if err != nil {
 		return question, err
 	}
 
 	return question, nil
+}
+
+func (s *PostgresStorage) GetQuestionOptions(id int) ([]string, error) {
+	query := `
+		SELECT o.option from options o
+			JOIN question_options qo on o.id = qo.option_id
+			WHERE qo.question_id = $1`
+
+	rows, err := s.db.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var options []string
+	for rows.Next() {
+		var option string
+		err := rows.Scan(&option)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, option)
+	}
+
+	return options, rows.Err()
+}
+func (s *PostgresStorage) GetQuestionCorrectOption(id int) (string, error) {
+	query := `
+		SELECT o.option from options o
+			JOIN question_options qo on o.id = qo.option_id
+			WHERE qo.question_id = $1 and qo.is_correct = true`
+
+	var option string
+	err := s.db.QueryRow(query, id).Scan(&option)
+	return option, err
 }
 func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 	query := `
@@ -212,7 +251,6 @@ func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 		if err != nil {
 			return nil, err
 		}
-		question.Answers = make([]string, 0)
 		question.Case.Parameters, question.Case.ParameterValues, err = s.getCaseParameters(question.Case.ID)
 		if err != nil {
 			return nil, err
