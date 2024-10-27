@@ -75,6 +75,7 @@ func (a *ApiServer) Run() {
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	a.logger.Info("registering routes")
+
 	// user actions, external api
 	mux.HandleFunc("GET /quiz/sessions", middleware.VerifyToken(handlers.NewGetUserActiveSessionsHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("POST /quiz/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
@@ -82,7 +83,6 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
 	mux.HandleFunc("POST /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
 
-	// Admin actions, internal api
 	// Case routes
 	caseHandler := handlers.NewCaseHandler(a.storage, a.logger)
 	mux.HandleFunc("GET /quiz/cases", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.GetAllCases), a.authClient))
