@@ -7,9 +7,9 @@ import (
 )
 
 type QuizSession struct {
-	ID                int
-	UserID            int
-	Mode              QuizMode
+	ID                int      `json:"session_id"`
+	UserID            int      `json:"user_id"`
+	Mode              QuizMode `json:"quiz_mode"`
 	Status            QuizStatus
 	CurrentQuestionID int
 	CreatedAt         *time.Time

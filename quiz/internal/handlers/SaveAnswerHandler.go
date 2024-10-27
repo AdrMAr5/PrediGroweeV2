@@ -47,10 +47,21 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	if userID != session.UserID {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 	}
+	data := map[string]interface{}{}
+
+	// todo: change question id after testing
+	correct, err := h.storage.GetQuestionCorrectOption(session.CurrentQuestionID%2 + 1)
+	if err != nil {
+		h.logger.Error("failed to get question correct option", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
 	if session.Mode == models.QuizModeEducational {
-		// todo: handle return correct answer
+		h.logger.Info("educational mode")
+		data["correct"] = correct
 		h.logger.Info("educational mode, returning correct answer")
 	}
+	h.logger.Info("submitting answer")
 	session.CurrentQuestionID = session.CurrentQuestionID + 1
 	err = h.storage.UpdateQuizSession(session)
 	if err != nil {
@@ -65,24 +76,21 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "invalid answer", http.StatusBadRequest)
 		return
 	}
-	totalQuestions, err := h.storage.CountQuestions()
-	if err != nil {
-		h.logger.Error("failed to count questions", zap.Error(err))
-		totalQuestions = 50
-	}
 
-	err = h.statsClient.SaveResponse(models.QuestionAnswer{
-		QuestionID:    session.CurrentQuestionID,
-		UserID:        session.UserID,
-		SessionID:     session.ID,
-		Answer:        answer.Answer,
-		IsFirstAnswer: session.CurrentQuestionID == 1,
-		IsLastAnswer:  session.CurrentQuestionID == totalQuestions,
+	err = h.statsClient.SaveResponse(session.ID, models.QuestionAnswer{
+		QuestionID: session.CurrentQuestionID,
+		Answer:     answer.Answer,
+		IsCorrect:  answer.Answer == correct,
 	})
 	if err != nil {
 		h.logger.Error("failed to save response", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(rw).Encode(data); err != nil {
+		h.logger.Error("failed to encode response", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
 }
