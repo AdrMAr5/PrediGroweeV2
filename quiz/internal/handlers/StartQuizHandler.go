@@ -39,7 +39,7 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		Mode:              payload.Mode,
 		UserID:            userID,
 		Status:            models.QuizStatusNotStarted,
-		CurrentQuestionID: 1,
+		CurrentQuestionID: 3,
 	}
 	sessionCreated, err := h.storage.CreateQuizSession(quizSession)
 	if err != nil {

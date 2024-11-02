@@ -55,7 +55,7 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		rw.WriteHeader(http.StatusNoContent)
 		return
 	}
-	question, err := h.storage.GetQuestionByID(session.CurrentQuestionID%2 + 1)
+	question, err := h.storage.GetQuestionByID(session.CurrentQuestionID)
 	if err != nil {
 		http.Error(rw, "failed to get question", http.StatusNotFound)
 		return

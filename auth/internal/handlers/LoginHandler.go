@@ -36,13 +36,13 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	userSession, err := h.store.GetUserSession(dbUser.ID)
-	if err == nil {
-		if userSession.Expiration.After(time.Now()) {
-			http.Error(w, "User already logged in", http.StatusConflict)
-			return
-		}
-	}
+	//userSession, err := h.store.GetUserSession(dbUser.ID)
+	//if err == nil {
+	//	if userSession.Expiration.After(time.Now()) {
+	//		http.Error(w, "User already logged in", http.StatusConflict)
+	//		return
+	//	}
+	//}
 	if err = bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(userPayload.Password)); err != nil {
 		h.logger.Error("Error comparing passwords", zap.Error(err))
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)

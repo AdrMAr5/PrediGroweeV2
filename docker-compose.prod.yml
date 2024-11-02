@@ -1,0 +1,103 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/fullchain.cer:/etc/nginx/ssl/fullchain.cer:ro
+      - ./certs/www.predigrowee.agh.edu.pl.key:/etc/nginx/ssl/privkey.key:ro
+    depends_on:
+      - auth
+      - quiz
+      - stats
+
+  auth_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=auth_db
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  quiz_db:
+      image: postgres:13
+      environment:
+        - POSTGRES_USER=${QUIZ_DB_USER}
+        - POSTGRES_PASSWORD=${QUIZ_DB_PASSWORD}
+        - POSTGRES_DB=quiz_db
+      volumes:
+        - quiz_db_data:/var/lib/postgresql/data
+      expose:
+        - "5432"
+
+  stats_db:
+      image: postgres:13
+      environment:
+        - POSTGRES_USER=${STATS_DB_USER}
+        - POSTGRES_PASSWORD=${STATS_DB_PASSWORD}
+        - POSTGRES_DB=stats_db
+      volumes:
+        - stats_db_data:/var/lib/postgresql/data
+      expose:
+        - "5432"
+
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    environment:
+      - ENV=production
+      - SERVICE_NAME=auth
+      - DB_HOST=auth_db
+      - DB_PORT=5432
+      - DB_USER=${AUTH_DB_USER}
+      - DB_PASSWORD=${AUTH_DB_PASSWORD}
+      - DB_NAME=auth_db
+    depends_on:
+      - auth_db
+
+  quiz:
+    build:
+      context: ./quiz
+      dockerfile: Dockerfile
+    environment:
+      - ENV=production
+      - SERVICE_NAME=quiz
+      - DB_HOST=quiz_db
+      - DB_PORT=5432
+      - DB_USER=${QUIZ_DB_USER}
+      - DB_PASSWORD=${QUIZ_DB_PASSWORD}
+      - DB_NAME=quiz_db
+    depends_on:
+      - quiz_db
+      - auth
+
+  stats:
+    build:
+      context: ./stats
+      dockerfile: Dockerfile
+    environment:
+      - ENV=production
+      - SERVICE_NAME=stats
+      - DB_HOST=stats_db
+      - DB_PORT=5432
+      - DB_USER=${STATS_DB_USER}
+      - DB_PASSWORD=${STATS_DB_PASSWORD}
+      - DB_NAME=stats_db
+    depends_on:
+      - stats_db
+      - auth
+
+volumes:
+  auth_db_data:
+  quiz_db_data:
+  stats_db_data:
+
+
