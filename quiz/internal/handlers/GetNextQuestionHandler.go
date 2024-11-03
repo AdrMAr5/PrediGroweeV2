@@ -45,7 +45,7 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		http.Error(rw, "quiz is finished", http.StatusNotFound)
 		return
 	}
-	if session.CurrentQuestionID == 5 {
+	if session.CurrentQuestionID == 10 {
 		session.Status = "finished"
 		err = h.storage.UpdateQuizSession(session)
 		if err != nil {

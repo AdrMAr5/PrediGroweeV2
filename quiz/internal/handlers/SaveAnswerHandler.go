@@ -49,8 +49,7 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	}
 	data := map[string]interface{}{}
 
-	// todo: change question id after testing
-	correct, err := h.storage.GetQuestionCorrectOption(session.CurrentQuestionID%2 + 1)
+	correct, err := h.storage.GetQuestionCorrectOption(session.CurrentQuestionID)
 	if err != nil {
 		h.logger.Error("failed to get question correct option", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)

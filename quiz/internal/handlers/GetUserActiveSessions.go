@@ -36,5 +36,4 @@ func (h *GetUserActiveSessionsHandler) Handle(rw http.ResponseWriter, r *http.Re
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	rw.WriteHeader(http.StatusOK)
 }
