@@ -64,3 +64,15 @@ func GenerateSessionID(length int) (string, error) {
 	// Convert the byte slice to a hex string
 	return hex.EncodeToString(bytes), nil
 }
+
+// todo: use this function to set cookies in handlers
+func SetCookie(w http.ResponseWriter, name, value string) {
+	isProd := os.Getenv("ENV") == "production"
+	http.SetCookie(w, &http.Cookie{
+		Path:     "/",
+		Name:     name,
+		Value:    value,
+		HttpOnly: true,
+		Secure:   isProd,
+	})
+}

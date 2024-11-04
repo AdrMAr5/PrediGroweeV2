@@ -26,18 +26,6 @@ services:
     ports:
       - "5433:5432"  # Different port for local development
 
-  # Postgres for Images
-  images_db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=images_user
-      - POSTGRES_PASSWORD=images_password
-      - POSTGRES_DB=images_db
-    volumes:
-      - images_db_data:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"  # Different port for local development
-
   # Postgres for Quiz
   quiz_db:
     image: postgres:13
@@ -80,8 +68,8 @@ services:
     build:
       context: ./auth
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       - DB_HOST=auth_db
       - DB_PORT=5432
@@ -106,8 +94,10 @@ services:
       - DB_PASSWORD=images_password
       - DB_NAME=images_db
       - ENV=local
+    volumes:
+      - ./images_data:/app/images
     depends_on:
-      - images_db
+      - auth
 
   # Quiz microservice
   quiz:
@@ -125,6 +115,7 @@ services:
       - ENV=local
     depends_on:
       - quiz_db
+      - auth
 
   stats:
     build:
@@ -141,6 +132,7 @@ services:
       - ENV=local
     depends_on:
         - stats_db
+        - auth
   admin:
     build:
       context: ./admin
@@ -156,9 +148,10 @@ services:
       - ENV=local
     depends_on:
       - admin_db
+      - auth
 volumes:
   auth_db_data:
-  images_db_data:
   quiz_db_data:
   stats_db_data:
   admin_db_data:
+  image_data:

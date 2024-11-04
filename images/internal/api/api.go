@@ -5,9 +5,7 @@ import (
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"images/internal/clients"
-	"images/internal/handlers"
 	"images/internal/middleware"
-	"images/internal/storage"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,15 +15,13 @@ import (
 
 type ApiServer struct {
 	addr       string
-	storage    storage.Store
 	logger     *zap.Logger
 	authClient *clients.AuthClient
 }
 
-func NewApiServer(addr string, store storage.Store, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
+func NewApiServer(addr string, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
 	return &ApiServer{
 		addr:       addr,
-		storage:    store,
 		logger:     logger,
 		authClient: authClient,
 	}
@@ -41,7 +37,7 @@ func (a *ApiServer) Run() {
 	})
 	srv := &http.Server{
 		Addr:         a.addr,
-		Handler:      middleware.VerifyToken(corsMiddleware.Handler(mux).ServeHTTP, a.authClient),
+		Handler:      corsMiddleware.Handler(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -70,7 +66,5 @@ func (a *ApiServer) Run() {
 
 }
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /images/{id}", handlers.NewGetImageHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("POST /images", handlers.NewCreateImageHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("PATCH /images/{id}", handlers.NewUpdateImageHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("GET /images/{id}", middleware.VerifyToken(NewGetImageHandler(a.logger).Handle, a.authClient))
 }
