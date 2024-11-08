@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const PingDbAttempts = 3
+
 func main() {
 	// Initialize logger
 	var err error
@@ -46,8 +48,17 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 
 	// Verify database connection
+	for i := 1; i <= PingDbAttempts; i++ {
+		err = db.Ping()
+		if err == nil {
+			break
+		} else {
+			logger.Error(fmt.Sprintf("Failed to Ping the database (attempt: %d/%d)", i, PingDbAttempts), zap.Error(err))
+		}
+		time.Sleep(2 * time.Second)
+	}
 	if err = db.Ping(); err != nil {
-		logger.Fatal("Failed to ping database", zap.Error(err))
+		logger.Fatal("Failed to ping database, exiting", zap.Error(err))
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
 	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)

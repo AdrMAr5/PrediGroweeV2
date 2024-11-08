@@ -11,8 +11,10 @@ type Case struct {
 	Gender          string           `json:"gender"`
 	Age1            int              `json:"age1"`
 	Age2            int              `json:"age2"`
+	Age3            int              `json:"age3"`
 	Image1          string           `json:"image1"`
 	Image2          string           `json:"image2"`
+	Image3          string           `json:"image3"`
 	Parameters      []Parameter      `json:"parameters"`
 	ParameterValues []ParameterValue `json:"parameters_values"`
 }

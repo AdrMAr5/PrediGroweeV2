@@ -34,6 +34,7 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 	userID := r.Context().Value("user_id").(int)
 	session, err := h.storage.GetQuizSessionByID(sessionID)
 	if err != nil {
+		h.logger.Error("failed to get session", zap.Error(err))
 		http.Error(rw, "failed to get session", http.StatusNotFound)
 		return
 	}
@@ -43,16 +44,6 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 	}
 	if session.Status == "finished" {
 		http.Error(rw, "quiz is finished", http.StatusNotFound)
-		return
-	}
-	if session.CurrentQuestionID == 10 {
-		session.Status = "finished"
-		err = h.storage.UpdateQuizSession(session)
-		if err != nil {
-			http.Error(rw, "failed to get question", http.StatusInternalServerError)
-			return
-		}
-		rw.WriteHeader(http.StatusNoContent)
 		return
 	}
 	question, err := h.storage.GetQuestionByID(session.CurrentQuestionID)

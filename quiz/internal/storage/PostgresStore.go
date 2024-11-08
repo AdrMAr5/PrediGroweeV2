@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"quiz/internal/models"
 )
@@ -15,6 +16,7 @@ type Store interface {
 	GetQuizSessionByID(id int) (models.QuizSession, error)
 	UpdateQuizSession(session models.QuizSession) error
 	GetUserActiveQuizSessions(userID int) ([]models.QuizSession, error)
+	GetUserLastQuizSession(userID int) (*models.QuizSession, error)
 
 	// questions
 	GetQuestionByID(id int) (models.Question, error)
@@ -40,6 +42,10 @@ type Store interface {
 	DeleteParameter(id int) error
 	GetAllParameters() ([]models.Parameter, error)
 	GetParameterByID(id int) (models.Parameter, error)
+
+	//groups
+	GetGroupQuestionsIDsRandomOrder(groupID int) ([]int, error)
+	GetNextQuestionGroupID(currentGroup int) (int, error)
 }
 
 type PostgresStorage struct {
@@ -65,8 +71,8 @@ func (s *PostgresStorage) Close() error {
 // Quiz Sessions
 func (s *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.QuizSession, error) {
 	query := `
-        INSERT INTO quiz_sessions (user_id, status, mode, current_question, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        INSERT INTO quiz_sessions (user_id, status, mode, screen_size, current_question, current_group, group_order, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         RETURNING id, created_at, updated_at`
 
 	err := s.db.QueryRow(
@@ -74,7 +80,10 @@ func (s *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.
 		session.UserID,
 		session.Status,
 		session.Mode,
+		session.ScreenSize,
 		session.CurrentQuestionID,
+		session.CurrentGroup,
+		pq.Array(session.GroupOrder),
 	).Scan(&session.ID, &session.CreatedAt, &session.UpdatedAt)
 
 	return session, err
@@ -83,20 +92,29 @@ func (s *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.
 func (s *PostgresStorage) GetQuizSessionByID(id int) (models.QuizSession, error) {
 	var session models.QuizSession
 	query := `
-        SELECT id, user_id, status, mode, current_question, created_at, updated_at, finished_at
+        SELECT id, user_id, status, mode, current_question, current_group, group_order, created_at, updated_at, finished_at
         FROM quiz_sessions
         WHERE id = $1`
 
+	var intermediateArray []sql.NullInt64
 	err := s.db.QueryRow(query, id).Scan(
 		&session.ID,
 		&session.UserID,
 		&session.Status,
 		&session.Mode,
 		&session.CurrentQuestionID,
+		&session.CurrentGroup,
+		pq.Array(&intermediateArray),
 		&session.CreatedAt,
 		&session.UpdatedAt,
 		&session.FinishedAt,
 	)
+	session.GroupOrder = make([]int, 0, len(intermediateArray))
+	for _, nullInt := range intermediateArray {
+		if nullInt.Valid {
+			session.GroupOrder = append(session.GroupOrder, int(nullInt.Int64))
+		}
+	}
 
 	return session, err
 }
@@ -104,14 +122,22 @@ func (s *PostgresStorage) GetQuizSessionByID(id int) (models.QuizSession, error)
 func (s *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
 	query := `
         UPDATE quiz_sessions
-        SET status = $1, mode = $2, current_question = $3, updated_at = NOW(), finished_at = $4
-        WHERE id = $5`
+        SET status = $1, 
+            mode = $2, 
+            current_question = $3, 
+            current_group = $4, 
+            group_order = $5, 
+            updated_at = NOW(), 
+            finished_at = $6
+        WHERE id = $7`
 
 	_, err := s.db.Exec(
 		query,
 		session.Status,
 		session.Mode,
 		session.CurrentQuestionID,
+		session.CurrentGroup,
+		pq.Array(session.GroupOrder),
 		session.FinishedAt,
 		session.ID,
 	)
@@ -119,6 +145,7 @@ func (s *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
 	return err
 }
 
+// todo: handle group & group order
 func (s *PostgresStorage) GetUserActiveQuizSessions(userID int) ([]models.QuizSession, error) {
 	query := `
         SELECT id, user_id, status, mode, current_question, created_at, updated_at, finished_at
@@ -154,11 +181,50 @@ func (s *PostgresStorage) GetUserActiveQuizSessions(userID int) ([]models.QuizSe
 	return sessions, rows.Err()
 }
 
+func (s *PostgresStorage) GetUserLastQuizSession(userID int) (*models.QuizSession, error) {
+	query := `
+        SELECT id, user_id, status, mode, current_question, current_group, group_order, created_at, updated_at, finished_at
+        FROM quiz_sessions
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1`
+
+	var session models.QuizSession
+	var intermediateArray []int64
+
+	err := s.db.QueryRow(query, userID).Scan(
+		&session.ID,
+		&session.UserID,
+		&session.Status,
+		&session.Mode,
+		&session.CurrentQuestionID,
+		&session.CurrentGroup,
+		pq.Array(&intermediateArray),
+		&session.CreatedAt,
+		&session.UpdatedAt,
+		&session.FinishedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	session.GroupOrder = make([]int, len(intermediateArray))
+	for i, v := range intermediateArray {
+		session.GroupOrder[i] = int(v)
+	}
+
+	return &session, nil
+}
+
 // Questions
 func (s *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
 	query := `
         SELECT q.id, q.question, q.prediction_age,
-               c.id, c.code, c.patient_gender, c.age1, c.age2
+               c.id, c.code, c.patient_gender, c.age1, c.age2, c.age3
         FROM questions q
         JOIN cases c ON q.case_id = c.id
         WHERE q.id = $1`
@@ -173,6 +239,7 @@ func (s *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
 		&question.Case.Gender,
 		&question.Case.Age1,
 		&question.Case.Age2,
+		&question.Case.Age3,
 	)
 	if err != nil {
 		return question, err
@@ -195,7 +262,7 @@ func (s *PostgresStorage) GetQuestionOptions(id int) ([]string, error) {
 	query := `
 		SELECT o.option from options o
 			JOIN question_options qo on o.id = qo.option_id
-			WHERE qo.question_id = $1`
+			WHERE qo.question_id = $1 ORDER BY o.id`
 
 	rows, err := s.db.Query(query, id)
 	if err != nil {
@@ -258,6 +325,41 @@ func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 	defer rows.Close()
 	return questions, nil
 }
+
+func (s *PostgresStorage) GetGroupQuestionsIDsRandomOrder(groupNumber int) ([]int, error) {
+	query := `
+		SELECT id from questions
+		WHERE group_number = $1
+		order by random()`
+
+	rows, err := s.db.Query(query, groupNumber)
+	if err != nil {
+		return nil, err
+	}
+	var questions []int
+	for rows.Next() {
+		var questionID int
+		err = rows.Scan(&questionID)
+		if err != nil {
+			return nil, err
+		}
+		questions = append(questions, questionID)
+	}
+	defer rows.Close()
+	return questions, nil
+}
+func (s *PostgresStorage) GetNextQuestionGroupID(currentGroup int) (int, error) {
+	query := `
+		SELECT group_number from questions
+		WHERE group_number > $1
+		ORDER BY group_number
+		LIMIT 1`
+
+	var nextGroup int
+	err := s.db.QueryRow(query, currentGroup).Scan(&nextGroup)
+	return nextGroup, err
+}
+
 func (s *PostgresStorage) CreateQuestion(payload models.QuestionPayload) (models.QuestionPayload, error) {
 	query := `
         INSERT INTO questions (question, prediction_age, case_id)
@@ -528,7 +630,7 @@ func (s *PostgresStorage) getCaseParameters(caseID int) ([]models.Parameter, []m
 	query := `select cp.parameter_id, cp.value_1, cp.value_2, p.description, p.name, p.reference_value from cases c
 		join case_parameters cp on c.id = cp.case_id
 		join parameters p on cp.parameter_id = p.id
-		where c.id=$1;`
+		where c.id=$1 ORDER BY p.id`
 	rows, err := s.db.Query(query, caseID)
 	if err != nil {
 		return nil, nil, err

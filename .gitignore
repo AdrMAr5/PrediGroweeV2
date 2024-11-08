@@ -33,8 +33,9 @@ go.work.sum
 # db backups
 /db_backups
 
-# frontend
-/PrediGroweeV2-UI
 
 # ide specific files
 .idea
+
+# images
+/images_data

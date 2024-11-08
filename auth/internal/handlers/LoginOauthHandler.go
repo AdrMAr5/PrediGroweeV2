@@ -40,7 +40,7 @@ func (h *OauthLoginHandler) HandleGoogle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	dbUser, err := h.findOrCreateUser(userInfo)
+	dbUser, firstLogin, err := h.findOrCreateUser(userInfo)
 	if err != nil {
 		h.logger.Error("Error finding/creating user", zap.Error(err))
 		http.Error(w, "Error processing user", http.StatusInternalServerError)
@@ -85,6 +85,7 @@ func (h *OauthLoginHandler) HandleGoogle(w http.ResponseWriter, r *http.Request)
 		"user_id":      dbUser.ID,
 		"role":         dbUser.Role,
 		"access_token": accessToken,
+		"first_login":  firstLogin,
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -118,7 +119,7 @@ func (h *OauthLoginHandler) verifyGoogleToken(token string) (*models.GoogleUserI
 	return &userInfo, nil
 }
 
-func (h *OauthLoginHandler) findOrCreateUser(googleInfo *models.GoogleUserInfo) (*models.User, error) {
+func (h *OauthLoginHandler) findOrCreateUser(googleInfo *models.GoogleUserInfo) (*models.User, bool, error) {
 	dbUser, err := h.store.GetUserByEmail(googleInfo.Email)
 	if err == nil {
 		if dbUser.GoogleID != googleInfo.ID {
@@ -131,9 +132,9 @@ func (h *OauthLoginHandler) findOrCreateUser(googleInfo *models.GoogleUserInfo) 
 			dbUser.LastName = googleInfo.LastName
 		}
 		if err = h.store.UpdateUser(dbUser); err != nil {
-			return nil, err
+			return nil, false, err
 		}
-		return dbUser, nil
+		return dbUser, false, nil
 	}
 	newUser := &models.User{
 		Email:     googleInfo.Email,
@@ -144,7 +145,7 @@ func (h *OauthLoginHandler) findOrCreateUser(googleInfo *models.GoogleUserInfo) 
 	}
 	createdUser, err := h.store.CreateUser(newUser)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return createdUser, nil
+	return createdUser, true, nil
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
 	"net/http"
 	"quiz/internal/clients"
@@ -61,7 +62,14 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		h.logger.Info("educational mode, returning correct answer")
 	}
 	h.logger.Info("submitting answer")
-	session.CurrentQuestionID = session.CurrentQuestionID + 1
+
+	err = h.SetNextQuestionID(&session)
+	if err != nil {
+		h.logger.Error("failed to set next question id", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	session.Status = models.QuizStatusInProgress
 	err = h.storage.UpdateQuizSession(session)
 	if err != nil {
 		h.logger.Error("failed to update quiz session", zap.Error(err))
@@ -92,4 +100,28 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *SubmitAnswerHandler) SetNextQuestionID(qs *models.QuizSession) error {
+	for i, q := range qs.GroupOrder {
+		if q == qs.CurrentQuestionID {
+			if i+1 < len(qs.GroupOrder) {
+				qs.CurrentQuestionID = qs.GroupOrder[i+1]
+				return nil
+			} else {
+				nextGroup, err := h.storage.GetNextQuestionGroupID(qs.CurrentGroup)
+				if err != nil {
+					return err
+				}
+				qs.CurrentGroup = nextGroup
+				qs.GroupOrder, err = h.storage.GetGroupQuestionsIDsRandomOrder(qs.CurrentGroup)
+				if err != nil {
+					return err
+				}
+				qs.CurrentQuestionID = qs.GroupOrder[0]
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("question not found in group order")
 }

@@ -18,5 +18,9 @@ func NewGetImageHandler(logger *zap.Logger) *GetImageHandler {
 func (h *GetImageHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	h.logger.Info("Getting image with id: " + id)
-	http.ServeFile(rw, r, "/app/images/"+"xray1"+".jpg")
+	if id == "1" {
+		http.ServeFile(rw, r, "/app/images/"+"xray1"+".jpg")
+		return
+	}
+	http.ServeFile(rw, r, "/app/images/"+"xray2"+".jpg")
 }
