@@ -69,11 +69,12 @@ func main() {
 	apiServer.Run()
 }
 func connectToPostgres() (*sql.DB, error) {
-	env := os.Getenv("ENV")
-	sslMode := "require"
-	if env == "local" {
-		sslMode = "disable"
-	}
+	//env := os.Getenv("ENV")
+	//sslMode := "require"
+	//if env == "local" {
+	//	sslMode = "disable"
+	//}
+	sslMode := "disable"
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
