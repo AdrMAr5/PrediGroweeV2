@@ -14,6 +14,7 @@ services:
       - auth
       - quiz
       - stats
+      - images
 
   auth_db:
     image: postgres:13
@@ -47,6 +48,16 @@ services:
         - stats_db_data:/var/lib/postgresql/data
       expose:
         - "5432"
+  images_db:
+      image: postgres:13
+      environment:
+          - POSTGRES_USER=${IMAGES_DB_USER}
+          - POSTGRES_PASSWORD=${IMAGES_DB_PASSWORD}
+          - POSTGRES_DB=images_db
+      volumes:
+          - images_db_data:/var/lib/postgresql/data
+      expose:
+          - "5432"
 
   auth:
     build:
@@ -95,9 +106,23 @@ services:
       - stats_db
       - auth
 
+  images:
+    build:
+      context: ./images
+      dockerfile: Dockerfile
+    environment:
+      - ENV=local
+    volumes:
+      - ./images_data:/app/images
+    depends_on:
+      - auth
+      - images_db
+
 volumes:
   auth_db_data:
   quiz_db_data:
   stats_db_data:
+  images_db_data:
+  image_data:
 
 
