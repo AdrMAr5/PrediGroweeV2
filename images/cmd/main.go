@@ -60,7 +60,7 @@ func main() {
 	}
 
 	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
-	apiServer := api.NewApiServer(":8080", logger, authClient)
+	apiServer := api.NewApiServer(":8080", logger, authClient, db)
 	apiServer.Run()
 
 }

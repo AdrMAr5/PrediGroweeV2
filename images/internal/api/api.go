@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"images/internal/clients"
@@ -17,13 +18,15 @@ type ApiServer struct {
 	addr       string
 	logger     *zap.Logger
 	authClient *clients.AuthClient
+	db         *sql.DB
 }
 
-func NewApiServer(addr string, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
+func NewApiServer(addr string, logger *zap.Logger, authClient *clients.AuthClient, db *sql.DB) *ApiServer {
 	return &ApiServer{
 		addr:       addr,
 		logger:     logger,
 		authClient: authClient,
+		db:         db,
 	}
 }
 func (a *ApiServer) Run() {
@@ -66,5 +69,5 @@ func (a *ApiServer) Run() {
 
 }
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /images/{id}", middleware.VerifyToken(NewGetImageHandler(a.logger).Handle, a.authClient))
+	mux.HandleFunc("GET /images/{questionId}/image/{id}", middleware.VerifyToken(NewGetImageHandler(a.logger, a.db).Handle, a.authClient))
 }
