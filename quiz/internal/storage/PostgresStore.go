@@ -627,7 +627,7 @@ func (s *PostgresStorage) GetAllParameters() ([]models.Parameter, error) {
 
 // Helper functions
 func (s *PostgresStorage) getCaseParameters(caseID int) ([]models.Parameter, []models.ParameterValue, error) {
-	query := `select cp.parameter_id, cp.value_1, cp.value_2, p.description, p.name, p.reference_value from cases c
+	query := `select cp.parameter_id, cp.value_1, cp.value_2, cp.value_3, p.description, p.name, p.reference_value from cases c
 		join case_parameters cp on c.id = cp.case_id
 		join parameters p on cp.parameter_id = p.id
 		where c.id=$1 ORDER BY p.id`
@@ -641,7 +641,7 @@ func (s *PostgresStorage) getCaseParameters(caseID int) ([]models.Parameter, []m
 	for rows.Next() {
 		var p models.Parameter
 		var pv models.ParameterValue
-		err := rows.Scan(&p.ID, &pv.Value1, &pv.Value2, &p.Description, &p.Name, &p.ReferenceValues)
+		err := rows.Scan(&p.ID, &pv.Value1, &pv.Value2, &pv.Value3, &p.Description, &p.Name, &p.ReferenceValues)
 		if err != nil {
 			return nil, nil, err
 		}

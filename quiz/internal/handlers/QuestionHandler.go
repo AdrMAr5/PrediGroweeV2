@@ -94,10 +94,18 @@ func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	correct, err := h.storage.GetQuestionCorrectOption(questionID)
+	if err != nil {
+		h.logger.Error("Failed to get question correct option", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	question.Correct = &correct
 	err = question.ToJSON(w)
 	if err != nil {
 		h.logger.Error("Failed to encode response", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }

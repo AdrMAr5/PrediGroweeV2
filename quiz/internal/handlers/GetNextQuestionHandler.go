@@ -51,6 +51,10 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 		http.Error(rw, "failed to get question", http.StatusNotFound)
 		return
 	}
+	// reset the value3 field to 0 not to expose the parameters of correct answer
+	for _, pv := range question.Case.ParameterValues {
+		pv.Value3 = 0
+	}
 	err = question.ToJSON(rw)
 	if err != nil {
 		http.Error(rw, "failed to get question", http.StatusInternalServerError)

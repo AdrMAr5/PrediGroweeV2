@@ -93,6 +93,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /quiz/cases/{id}", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.DeleteCase), a.authClient))
 	// Question routes
 	questionHandler := handlers.NewQuestionHandler(a.storage, a.logger)
+	mux.HandleFunc("GET /quiz/{id}", middleware.VerifyToken(questionHandler.GetQuestion, a.authClient))
 	mux.HandleFunc("POST /quiz/questions", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.CreateQuestion), a.authClient))
 	mux.HandleFunc("PUT /quiz/questions/{id}", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.UpdateQuestion), a.authClient))
 	mux.HandleFunc("DELETE /quiz/questions/{id}", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.DeleteQuestion), a.authClient))
