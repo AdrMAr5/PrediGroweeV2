@@ -8,8 +8,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./certs/fullchain.cer:/etc/nginx/ssl/fullchain.cer:ro
-      - ./certs/www.predigrowee.agh.edu.pl.key:/etc/nginx/ssl/privkey.key:ro
+      - ./certs:/etc/nginx/ssl:ro
     depends_on:
       - auth
       - quiz
