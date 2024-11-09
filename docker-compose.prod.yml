@@ -111,11 +111,28 @@ services:
       dockerfile: Dockerfile
     environment:
       - ENV=local
+      - SERVICE_NAME=images
+      - DB_HOST=images_db
+      - DB_PORT=5432
+      - DB_USER=${IMAGES_DB_USER}
+      - DB_PASSWORD=${IMAGES_DB_PASSWORD}
+      - DB_NAME=images_db
     volumes:
       - ./images_data:/app/images
     depends_on:
       - auth
       - images_db
+
+  frontend:
+    build:
+      context: ../PrediGroweeV2-UI
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID= ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      - NEXT_PUBLIC_AUTH_SERVICE_URL=https://predigrowee.agh.edu.pl/api/auth
+      - NEXT_PUBLIC_QUIZ_SERVICE_URL=https://predigrowee.agh.edu.pl/api/quiz
+      - NEXT_PUBLIC_STATS_SERVICE_URL=https://predigrowee.agh.edu.pl/api/stats
+      - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
 
 volumes:
   auth_db_data:

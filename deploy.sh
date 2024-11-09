@@ -35,23 +35,23 @@ set +a  # stop automatically exporting
 
 # Start or update the services
 echo "🔄 Starting/updating services..."
-docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose -f docker-compose.prod.yml up  --build
 
 # Wait for services to be healthy
 #echo "🏥 Checking services health..."
 #sleep 10
 
-# Check if all services are running
-echo "📊 Service status:"
-docker-compose -f docker-compose.prod.yml ps
-
-# Check for any containers that exited
-failed_containers=$(docker-compose -f docker-compose.prod.yml ps -q -a --filter "exited=1")
-if [ ! -z "$failed_containers" ]; then
-    echo "❌ Some containers failed to start. Checking logs..."
-    docker-compose -f docker-compose.prod.yml logs --tail=50
-    exit 1
-fi
-
-echo "✅ Deployment completed successfully!"
-echo "You can check the logs using: docker-compose -f docker-compose.prod.yml logs -f"
+## Check if all services are running
+#echo "📊 Service status:"
+#docker-compose -f docker-compose.prod.yml ps
+#
+## Check for any containers that exited
+#failed_containers=$(docker-compose -f docker-compose.prod.yml ps -q -a --filter "exited=1")
+#if [ ! -z "$failed_containers" ]; then
+#    echo "❌ Some containers failed to start. Checking logs..."
+#    docker-compose -f docker-compose.prod.yml logs --tail=50
+#    exit 1
+#fi
+#
+#echo "✅ Deployment completed successfully!"
+#echo "You can check the logs using: docker-compose -f docker-compose.prod.yml logs -f"

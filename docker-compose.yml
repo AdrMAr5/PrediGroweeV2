@@ -161,6 +161,17 @@ services:
     depends_on:
       - admin_db
       - auth
+  frontend:
+    build:
+      context: ../../WebstormProjects/predi-growee-v2-frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+      - AUTH_SERVICE_URL=http://auth:8080
+      - QUIZ_SERVICE_URL=http://quiz:8080
+      - STATS_SERVICE_URL=http://stats:8080
+      - IMAGES_SERVICE_URL=http://images:8080
+
 volumes:
   auth_db_data:
   quiz_db_data:
