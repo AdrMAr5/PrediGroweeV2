@@ -11,6 +11,7 @@ type Question struct {
 	Options       []string `json:"options"`
 	PredictionAge int      `json:"prediction_age"`
 	Case          Case     `json:"case"`
+	Correct       *string  `json:"correct"`
 }
 
 func (q *Question) ToJSON(w io.Writer) error {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
 	"net/http"
 	"quiz/internal/clients"
@@ -35,13 +36,34 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	quizSession := models.QuizSession{
+	groupID, err := h.storage.GetNextQuestionGroupID(0)
+	order, err := h.storage.GetGroupQuestionsIDsRandomOrder(groupID)
+	if err != nil {
+		h.logger.Error("failed to start quiz", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	newQuizSession := models.QuizSession{
 		Mode:              payload.Mode,
 		UserID:            userID,
 		Status:            models.QuizStatusNotStarted,
-		CurrentQuestionID: 3,
+		ScreenSize:        fmt.Sprintf("%dx%d", payload.ScreenWidth, payload.ScreenHeight),
+		CurrentQuestionID: order[0],
+		CurrentGroup:      groupID,
+		GroupOrder:        order,
 	}
-	sessionCreated, err := h.storage.CreateQuizSession(quizSession)
+	session, err := h.storage.GetUserLastQuizSession(userID)
+	if err == nil && session != nil {
+		newQuizSession.CurrentQuestionID = session.CurrentQuestionID
+		newQuizSession.CurrentGroup = session.CurrentGroup
+		newQuizSession.GroupOrder = session.GroupOrder
+		session.FinishedAt = session.UpdatedAt
+		session.Status = models.QuizStatusFinished
+		err = h.storage.UpdateQuizSession(*session)
+	}
+
+	sessionCreated, err := h.storage.CreateQuizSession(newQuizSession)
 	if err != nil {
 		h.logger.Error("failed to create quiz session in db", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)

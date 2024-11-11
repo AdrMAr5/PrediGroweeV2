@@ -33,7 +33,8 @@ func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:80"}, // Allow requests from this origin
+		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:80", "https://predigrowee.agh.edu.pl",
+			"https://www.predigrowee.agh.edu.pl"}, // Allow requests from this origin
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
 		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
@@ -72,8 +73,9 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /auth/health", a.HealthCheckHandler)
 	router.HandleFunc("POST /auth/register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /auth/login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
-	router.HandleFunc("GET /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
-	router.HandleFunc("PUT /auth/users/{id}", middleware.ValidateSession(middleware.ValidateAccessToken(handlers.NewUpdateUserHandler(a.storage, a.logger).Handle, a.storage), a.storage))
+	router.HandleFunc("POST /auth/login/google", handlers.NewOauthLoginHandler(a.storage, a.logger).HandleGoogle)
+	router.HandleFunc("GET /auth/users/{id}", middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
+	router.HandleFunc("PUT /auth/users/{id}", middleware.ValidateAccessToken(handlers.NewUpdateUserHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
 	router.HandleFunc("GET /auth/verifySession", middleware.ValidateSession(handlers.NewVerifySessionHandler(a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage))

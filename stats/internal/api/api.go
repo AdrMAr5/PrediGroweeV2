@@ -35,7 +35,8 @@ func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from this origin
+		AllowedOrigins: []string{"http://localhost:3000", "https://predigrowee.agh.edu.pl",
+			"https://www.predigrowee.agh.edu.pl"}, // Allow requests from this origin
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
 		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
@@ -82,4 +83,5 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	//external
 	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("GET /stats/{quizSessionId}", middleware.VerifyToken(handlers.NewQuizStatsHandler(a.storage, a.logger).GetStats, a.authClient))
+	mux.HandleFunc("POST /stats/survey", middleware.VerifyToken(handlers.NewSaveSurveyHandler(a.storage, a.logger).Handle, a.authClient))
 }

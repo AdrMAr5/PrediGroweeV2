@@ -2,12 +2,11 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"images/internal/clients"
-	"images/internal/handlers"
 	"images/internal/middleware"
-	"images/internal/storage"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,31 +16,32 @@ import (
 
 type ApiServer struct {
 	addr       string
-	storage    storage.Store
 	logger     *zap.Logger
 	authClient *clients.AuthClient
+	db         *sql.DB
 }
 
-func NewApiServer(addr string, store storage.Store, logger *zap.Logger, authClient *clients.AuthClient) *ApiServer {
+func NewApiServer(addr string, logger *zap.Logger, authClient *clients.AuthClient, db *sql.DB) *ApiServer {
 	return &ApiServer{
 		addr:       addr,
-		storage:    store,
 		logger:     logger,
 		authClient: authClient,
+		db:         db,
 	}
 }
 func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from this origin
+		AllowedOrigins: []string{"http://localhost:3000", "https://predigrowee.agh.edu.pl",
+			"https://www.predigrowee.agh.edu.pl"}, // Allow requests from this origin
 		AllowCredentials: true,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
 		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
 	})
 	srv := &http.Server{
 		Addr:         a.addr,
-		Handler:      middleware.VerifyToken(corsMiddleware.Handler(mux).ServeHTTP, a.authClient),
+		Handler:      corsMiddleware.Handler(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -70,7 +70,5 @@ func (a *ApiServer) Run() {
 
 }
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /images/{id}", handlers.NewGetImageHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("POST /images", handlers.NewCreateImageHandler(a.storage, a.logger).Handle)
-	mux.HandleFunc("PATCH /images/{id}", handlers.NewUpdateImageHandler(a.storage, a.logger).Handle)
+	mux.HandleFunc("GET /images/{questionId}/image/{id}", middleware.VerifyToken(NewGetImageHandler(a.logger, a.db).Handle, a.authClient))
 }

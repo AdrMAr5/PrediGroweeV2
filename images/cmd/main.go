@@ -7,11 +7,12 @@ import (
 	"go.uber.org/zap"
 	"images/internal/api"
 	"images/internal/clients"
-	"images/internal/storage"
 	"log"
 	"os"
 	"time"
 )
+
+const PingDbAttempts = 3
 
 func main() {
 	// Initialize logger
@@ -45,20 +46,31 @@ func main() {
 	db.SetConnMaxLifetime(5 * time.Minute)
 
 	// Verify database connection
-	if err = db.Ping(); err != nil {
-		logger.Fatal("Failed to ping database", zap.Error(err))
+	for i := 1; i <= PingDbAttempts; i++ {
+		err = db.Ping()
+		if err == nil {
+			break
+		} else {
+			logger.Error(fmt.Sprintf("Failed to Ping the database (attempt: %d/%d)", i, PingDbAttempts), zap.Error(err))
+		}
+		time.Sleep(2 * time.Second)
 	}
-	postgresStorage := storage.NewPostgresStorage(db, logger)
-	authClient := clients.NewAuthClient("http://auth:8080", logger)
-	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient)
+	if err = db.Ping(); err != nil {
+		logger.Fatal("Failed to ping database, exiting", zap.Error(err))
+	}
+
+	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
+	apiServer := api.NewApiServer(":8080", logger, authClient, db)
 	apiServer.Run()
+
 }
 func connectToPostgres() (*sql.DB, error) {
-	env := os.Getenv("ENV")
-	sslMode := "require"
-	if env == "local" {
-		sslMode = "disable"
-	}
+	//env := os.Getenv("ENV")
+	//sslMode := "require"
+	//if env == "local" {
+	//	sslMode = "disable"
+	//}
+	sslMode := "disable"
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")

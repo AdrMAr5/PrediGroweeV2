@@ -17,6 +17,10 @@ type Storage interface {
 	GetQuizQuestionsStats(quizSessionID int) ([]models.QuestionStats, error)
 	GetUserQuizStats(quizSessionID int) (*models.QuizStats, error)
 	FinishQuizSession(quizSessionID int) error
+
+	// survey
+	SaveSurveyResponse(response *models.SurveyResponse) error
+	GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error)
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -108,7 +112,7 @@ where a.session_id = $1`
 }
 func (p *PostgresStorage) GetUserQuizStats(quizSessionID int) (*models.QuizStats, error) {
 	var quizStats models.QuizStats
-	err := p.db.QueryRow(`select quiz_mode, count(*) as total_questions, sum(CASE WHEN correct THEN 1 END) as correct_answers from answers a
+	err := p.db.QueryRow(`select quiz_mode, count(*) as total_questions, sum(CASE WHEN correct THEN 1 ELSE 0 END) as correct_answers from answers a
 join quiz_sessions s on a.session_id = s.session_id
 where a.session_id = $1
 group by quiz_mode`, quizSessionID).Scan(&quizStats.Mode, &quizStats.TotalQuestions, &quizStats.CorrectAnswers)
@@ -132,4 +136,22 @@ func (p *PostgresStorage) FinishQuizSession(quizSessionID int) error {
 		return err
 	}
 	return nil
+}
+
+func (p *PostgresStorage) SaveSurveyResponse(response *models.SurveyResponse) error {
+	query := `INSERT INTO users_surveys 
+    			(user_id, gender, age, vision_defect, education, experience, country, name, surname)
+				values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	_, err := p.db.Exec(query, response.UserID, response.Gender, response.Age, response.VisionDefect, response.Education, response.Experience, response.Country, response.Name, response.Surname)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *PostgresStorage) GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error) {
+	query := `SELECT user_id, gender, age, vision_defect, education, experience, country, name, surname FROM users_surveys
+		WHERE user_id = $1`
+	var surveyResponses models.SurveyResponse
+	err := p.db.QueryRow(query, userID).Scan(&surveyResponses.UserID, &surveyResponses.Gender, &surveyResponses.Age, &surveyResponses.VisionDefect, &surveyResponses.Education, &surveyResponses.Experience, &surveyResponses.Country, &surveyResponses.Name, &surveyResponses.Surname)
+	return &surveyResponses, err
 }

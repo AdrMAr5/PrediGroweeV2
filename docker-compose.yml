@@ -26,18 +26,6 @@ services:
     ports:
       - "5433:5432"  # Different port for local development
 
-  # Postgres for Images
-  images_db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=images_user
-      - POSTGRES_PASSWORD=images_password
-      - POSTGRES_DB=images_db
-    volumes:
-      - images_db_data:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"  # Different port for local development
-
   # Postgres for Quiz
   quiz_db:
     image: postgres:13
@@ -74,14 +62,24 @@ services:
     ports:
       - "5437:5432"  # Different port for local development
 
+  images_db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=images_user
+      - POSTGRES_PASSWORD=images_password
+      - POSTGRES_DB=images_db
+    volumes:
+      - image_data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"  # Different port for local development
 
   # Auth microservice
   auth:
     build:
       context: ./auth
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
       - DB_HOST=auth_db
       - DB_PORT=5432
@@ -100,13 +98,17 @@ services:
     expose:
       - "8080"
     environment:
+      - ENV=local
       - DB_HOST=images_db
       - DB_PORT=5432
       - DB_USER=images_user
       - DB_PASSWORD=images_password
       - DB_NAME=images_db
       - ENV=local
+    volumes:
+      - ./images_data:/app/images
     depends_on:
+      - auth
       - images_db
 
   # Quiz microservice
@@ -125,6 +127,7 @@ services:
       - ENV=local
     depends_on:
       - quiz_db
+      - auth
 
   stats:
     build:
@@ -141,6 +144,7 @@ services:
       - ENV=local
     depends_on:
         - stats_db
+        - auth
   admin:
     build:
       context: ./admin
@@ -156,9 +160,21 @@ services:
       - ENV=local
     depends_on:
       - admin_db
+      - auth
+  frontend:
+    build:
+      context: ../../WebstormProjects/predi-growee-v2-frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+      - AUTH_SERVICE_URL=http://auth:8080
+      - QUIZ_SERVICE_URL=http://quiz:8080
+      - STATS_SERVICE_URL=http://stats:8080
+      - IMAGES_SERVICE_URL=http://images:8080
+
 volumes:
   auth_db_data:
-  images_db_data:
   quiz_db_data:
   stats_db_data:
   admin_db_data:
+  image_data:

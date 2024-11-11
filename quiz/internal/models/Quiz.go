@@ -21,7 +21,9 @@ const (
 )
 
 type StartQuizPayload struct {
-	Mode QuizMode `json:"mode" ,validate:"required,oneof=educational classic limited_time"`
+	Mode         QuizMode `json:"mode" ,validate:"required,oneof=educational classic limited_time"`
+	ScreenWidth  int      `json:"screen_width" ,validate:"required"`
+	ScreenHeight int      `json:"screen_height" ,validate:"required"`
 }
 
 func (p *StartQuizPayload) Validate() error {
