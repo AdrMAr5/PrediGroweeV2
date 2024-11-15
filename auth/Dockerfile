@@ -19,8 +19,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.g
 # Use a smaller base image for the final stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
-
 WORKDIR /root/
 
 # Copy the pre-built binary file from the previous stage
