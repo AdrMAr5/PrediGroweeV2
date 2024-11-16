@@ -11,12 +11,14 @@ import (
 
 type StatsClient struct {
 	addr   string
+	apiKey string
 	logger *zap.Logger
 }
 
-func NewStatsClient(addr string, logger *zap.Logger) *StatsClient {
+func NewStatsClient(addr string, apiKey string, logger *zap.Logger) *StatsClient {
 	return &StatsClient{
 		addr:   addr,
+		apiKey: apiKey,
 		logger: logger,
 	}
 }
@@ -33,6 +35,7 @@ func (c *StatsClient) SaveResponse(sessionID int, answer models.QuestionAnswer) 
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Api-Key", c.apiKey)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -58,6 +61,7 @@ func (c *StatsClient) SaveSession(session models.QuizSession) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Api-Key", c.apiKey)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -78,6 +82,7 @@ func (c *StatsClient) FinishSession(sessionID int) error {
 		return err
 	}
 	client := &http.Client{}
+	req.Header.Set("X-Api-Key", c.apiKey)
 	resp, err := client.Do(req)
 	if err != nil {
 		c.logger.Error("failed to send request", zap.Error(err))

@@ -63,7 +63,7 @@ func main() {
 	postgresStorage := storage.NewPostgresStorage(db, logger)
 	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
 	logger.Info("Connected to auth service")
-	statsClient := clients.NewStatsClient("http://stats:8080/stats", logger)
+	statsClient := clients.NewStatsClient("http://stats:8080/stats", os.Getenv("INTERNAL_API_KEY"), logger)
 	logger.Info("Connected to stats service")
 	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient, statsClient)
 	apiServer.Run()

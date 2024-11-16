@@ -3,6 +3,7 @@ package api
 import (
 	"admin/clients"
 	"admin/internal/handlers"
+	"admin/internal/middleware"
 	"admin/internal/storage"
 	"context"
 	"github.com/rs/cors"
@@ -71,5 +72,9 @@ func (a *ApiServer) Run() {
 }
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
+	// users
+	mux.HandleFunc("GET /admin/users", middleware.VerifyAdmin(handlers.NewUsersHandler(a.storage, a.logger, a.authClient).GetUsers, a.authClient))
+
+	// stats
 	mux.HandleFunc("GET /admin/allStats", handlers.NewAllStatsHandler(a.storage, a.logger).Handle)
 }

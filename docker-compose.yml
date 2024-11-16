@@ -1,10 +1,11 @@
-version: '3'
+version: '3.8'
 
 services:
   nginx:
-    image: nginx:latest
+    image: nginx:alpine
     ports:
-      - "80:80"
+      - "8080:8080"
+      - "3001:3000"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -69,7 +70,7 @@ services:
       - POSTGRES_PASSWORD=images_password
       - POSTGRES_DB=images_db
     volumes:
-      - image_data:/var/lib/postgresql/data
+      - images_db_data:/var/lib/postgresql/data
     ports:
       - "5438:5432"  # Different port for local development
 
@@ -87,6 +88,8 @@ services:
       - DB_PASSWORD=auth_password
       - DB_NAME=auth_db
       - ENV=local
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_API_KEY=api_key
     depends_on:
       - auth_db
 
@@ -125,6 +128,7 @@ services:
       - DB_PASSWORD=quiz_password
       - DB_NAME=quiz_db
       - ENV=local
+      - INTERNAL_API_KEY=api_key
     depends_on:
       - quiz_db
       - auth
@@ -142,6 +146,7 @@ services:
       - DB_PASSWORD=stats_password
       - DB_NAME=stats_db
       - ENV=local
+      - INTERNAL_API_KEY=api_key
     depends_on:
         - stats_db
         - auth
@@ -158,23 +163,35 @@ services:
       - DB_PASSWORD=admin_password
       - DB_NAME=admin_db
       - ENV=local
+      - INTERNAL_API_KEY=api_key
     depends_on:
       - admin_db
       - auth
-  frontend:
-    build:
-      context: ../../WebstormProjects/predi-growee-v2-frontend
-      dockerfile: Dockerfile
-    environment:
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
-      - AUTH_SERVICE_URL=http://auth:8080
-      - QUIZ_SERVICE_URL=http://quiz:8080
-      - STATS_SERVICE_URL=http://stats:8080
-      - IMAGES_SERVICE_URL=http://images:8080
+#  frontend:
+#    build:
+#      context: ../../WebstormProjects/predi-growee-v2-frontend
+#      dockerfile: Dockerfile.dev
+#      args:
+#        - ENV=local
+#        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+#        - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
+#        - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
+#        - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
+#        - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
+#        - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+#    environment:
+#      - ENV=local
+#      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+#      - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
+#      - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
+#      - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
+#      - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
+#      - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
 
 volumes:
   auth_db_data:
   quiz_db_data:
   stats_db_data:
   admin_db_data:
-  image_data:
+  images_db_data:
+  images_data:
