@@ -67,7 +67,6 @@ func (h *QuizStatsHandler) SaveSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *QuizStatsHandler) FinishSession(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id").(int)
 	quizId := r.PathValue("quizSessionId")
 	if quizId == "" {
 		http.Error(w, "missing quiz id", http.StatusBadRequest)
@@ -76,15 +75,6 @@ func (h *QuizStatsHandler) FinishSession(w http.ResponseWriter, r *http.Request)
 	quizSessionID, err := strconv.Atoi(quizId)
 	if err != nil {
 		http.Error(w, "invalid quiz id", http.StatusBadRequest)
-		return
-	}
-	session, err := h.storage.GetQuizSessionByID(quizSessionID)
-	if err != nil {
-		http.Error(w, "failed to get session", http.StatusNotFound)
-		return
-	}
-	if session.UserID != userID {
-		http.Error(w, "failed to get session", http.StatusNotFound)
 		return
 	}
 	err = h.storage.FinishQuizSession(quizSessionID)

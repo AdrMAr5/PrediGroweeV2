@@ -28,6 +28,9 @@ type Store interface {
 	GetQuestionOptions(id int) ([]string, error)
 	GetQuestionCorrectOption(id int) (string, error)
 
+	// options
+	GetAllOptions() ([]models.Option, error)
+
 	// cases
 	CreateCase(newCase models.Case) (models.Case, error)
 	UpdateCase(updatedCase models.Case) (models.Case, error)
@@ -293,9 +296,9 @@ func (s *PostgresStorage) GetQuestionCorrectOption(id int) (string, error) {
 func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 	query := `
 				SELECT q.id, q.question, q.prediction_age,
-               c.id, c.code, c.patient_gender, c.age1, c.age2
+               c.id, c.code, c.patient_gender, c.age1, c.age2, c.age3, group_number
         FROM questions q
-        JOIN cases c ON q.case_id = c.id`
+        JOIN cases c ON q.case_id = c.id order by q.id`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -312,18 +315,50 @@ func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 			&question.Case.Code,
 			&question.Case.Gender,
 			&question.Case.Age1,
-			&question.Case.Age2)
+			&question.Case.Age2,
+			&question.Case.Age3,
+			&question.Group)
 		if err != nil {
 			return nil, err
 		}
-		question.Case.Parameters, question.Case.ParameterValues, err = s.getCaseParameters(question.Case.ID)
+		//question.Case.Parameters, question.Case.ParameterValues, err = s.getCaseParameters(question.Case.ID)
+		//if err != nil {
+		//	return nil, err
+		//}
+		question.Options, err = s.GetQuestionOptions(question.ID)
 		if err != nil {
-			return nil, err
+			s.logger.Error("Failed to get question options", zap.Error(err))
 		}
+		correct, err := s.GetQuestionCorrectOption(question.ID)
+		if err != nil {
+			s.logger.Error("Failed to get question correct option", zap.Error(err))
+		}
+		question.Correct = &correct
 		questions = append(questions, question)
 	}
 	defer rows.Close()
 	return questions, nil
+}
+
+func (s *PostgresStorage) GetAllOptions() ([]models.Option, error) {
+	query := `
+		SELECT id, option from options
+		ORDER BY id`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	var options []models.Option
+	for rows.Next() {
+		var option models.Option
+		err := rows.Scan(&option.ID, &option.Option)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, option)
+	}
+	return options, nil
 }
 
 func (s *PostgresStorage) GetGroupQuestionsIDsRandomOrder(groupNumber int) ([]int, error) {

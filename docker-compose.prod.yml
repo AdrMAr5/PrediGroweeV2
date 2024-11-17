@@ -58,6 +58,17 @@ services:
       expose:
           - "5432"
 
+  admin_db:
+      image: postgres:13
+      environment:
+          - POSTGRES_USER=${ADMIN_DB_USER}
+          - POSTGRES_PASSWORD=${ADMIN_DB_PASSWORD}
+          - POSTGRES_DB=admin_db
+      volumes:
+          - admin_db_data:/var/lib/postgresql/data
+      expose:
+          - "5432"
+
   auth:
     build:
       context: ./auth
@@ -117,7 +128,7 @@ services:
       context: ./images
       dockerfile: Dockerfile
     environment:
-      - ENV=local
+      - ENV=production
       - SERVICE_NAME=images
       - DB_HOST=images_db
       - DB_PORT=5432
@@ -131,6 +142,26 @@ services:
     depends_on:
       - auth
       - images_db
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    environment:
+      - ENV=production
+      - SERVICE_NAME=admin
+      - DB_HOST=admin_db
+      - DB_PORT=5432
+      - DB_NAME=admin_db
+      - DB_USER=${ADMIN_DB_USER}
+      - DB_PASSWORD=${ADMIN_DB_PASSWORD}
+
+    expose:
+      - "8080"
+    depends_on:
+      - auth
+      - quiz
+      - stats
+      - images
 
   frontend:
     build:
@@ -142,6 +173,7 @@ services:
         - NEXT_PUBLIC_QUIZ_SERVICE_URL=https://predigrowee.agh.edu.pl/api/quiz
         - NEXT_PUBLIC_STATS_SERVICE_URL=https://predigrowee.agh.edu.pl/api/stats
         - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
+        - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
         - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
     environment:
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID= ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
@@ -149,6 +181,7 @@ services:
       - NEXT_PUBLIC_QUIZ_SERVICE_URL=https://predigrowee.agh.edu.pl/api/quiz
       - NEXT_PUBLIC_STATS_SERVICE_URL=https://predigrowee.agh.edu.pl/api/stats
       - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
+      - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
       - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
     expose:
       - "3000"
@@ -158,6 +191,7 @@ volumes:
   quiz_db_data:
   stats_db_data:
   images_db_data:
+  admin_db_data:
   images_data:
 
 

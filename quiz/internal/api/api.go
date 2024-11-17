@@ -84,32 +84,38 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
 	mux.HandleFunc("POST /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
 
+	// internal api
+	apiKey := os.Getenv("INTERNAL_API_KEY")
 	// Case routes
 	caseHandler := handlers.NewCaseHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /quiz/cases", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.GetAllCases), a.authClient))
+	mux.HandleFunc("GET /quiz/cases", middleware.InternalAuth(caseHandler.GetAllCases, a.logger, apiKey))
 	//todo: fix, idk why tf this is not working but it is not
-	//mux.HandleFunc("GET /quiz/cases/{id}", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.GetCaseByID), a.authClient))
-	mux.HandleFunc("POST /quiz/cases", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.CreateCase), a.authClient))
-	mux.HandleFunc("PUT /quiz/cases/{id}", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.UpdateCase), a.authClient))
-	mux.HandleFunc("DELETE /quiz/cases/{id}", middleware.VerifyToken(middleware.WithAdminRole(caseHandler.DeleteCase), a.authClient))
+	//mux.HandleFunc("GET /quiz/cases/{id}", middleware.VerifyToken(middleware.InternalAuth(caseHandler.GetCaseByID), a.authClient))
+	mux.HandleFunc("POST /quiz/cases", middleware.InternalAuth(caseHandler.CreateCase, a.logger, apiKey))
+	mux.HandleFunc("PUT /quiz/cases/{id}", middleware.InternalAuth(caseHandler.UpdateCase, a.logger, apiKey))
+	mux.HandleFunc("DELETE /quiz/cases/{id}", middleware.InternalAuth(caseHandler.DeleteCase, a.logger, apiKey))
 	// Question routes
 	questionHandler := handlers.NewQuestionHandler(a.storage, a.logger)
 	mux.HandleFunc("GET /quiz/{id}", middleware.VerifyToken(questionHandler.GetQuestion, a.authClient))
-	mux.HandleFunc("POST /quiz/questions", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.CreateQuestion), a.authClient))
-	mux.HandleFunc("PUT /quiz/questions/{id}", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.UpdateQuestion), a.authClient))
-	mux.HandleFunc("DELETE /quiz/questions/{id}", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.DeleteQuestion), a.authClient))
-	mux.HandleFunc("GET /quiz/questions", middleware.VerifyToken(middleware.WithAdminRole(questionHandler.GetAllQuestions), a.authClient))
+	mux.HandleFunc("POST /quiz/questions", middleware.InternalAuth(questionHandler.CreateQuestion, a.logger, apiKey))
+	mux.HandleFunc("PUT /quiz/questions/{id}", middleware.InternalAuth(questionHandler.UpdateQuestion, a.logger, apiKey))
+	mux.HandleFunc("DELETE /quiz/questions/{id}", middleware.InternalAuth(questionHandler.DeleteQuestion, a.logger, apiKey))
+	mux.HandleFunc("GET /quiz/questions", middleware.InternalAuth(questionHandler.GetAllQuestions, a.logger, apiKey))
+
+	// options routes
+	optionsHandler := handlers.NewOptionsHandler(a.storage, a.logger)
+	mux.HandleFunc("GET /quiz/options", middleware.InternalAuth(optionsHandler.GetAllOptions, a.logger, apiKey))
 	// Group routes
-	groupHandler := handlers.NewGroupHandler(a.storage, a.logger)
-	mux.HandleFunc("POST /quiz/groups", middleware.VerifyToken(middleware.WithAdminRole(groupHandler.CreateGroup), a.authClient))
-	mux.HandleFunc("PUT /quiz/groups/{id}", middleware.VerifyToken(middleware.WithAdminRole(groupHandler.UpdateGroup), a.authClient))
-	mux.HandleFunc("DELETE /quiz/groups/{id}", middleware.VerifyToken(middleware.WithAdminRole(groupHandler.DeleteGroup), a.authClient))
-	mux.HandleFunc("GET /quiz/groups", middleware.VerifyToken(middleware.WithAdminRole(groupHandler.GetAllGroups), a.authClient))
+	//groupHandler := handlers.NewGroupHandler(a.storage, a.logger)
+	//mux.HandleFunc("POST /quiz/groups", middleware.InternalAuth(groupHandler.CreateGroup, a.logger, apiKey))
+	//mux.HandleFunc("PUT /quiz/groups/{id}", middleware.InternalAuth(groupHandler.UpdateGroup, a.logger, apiKey))
+	//mux.HandleFunc("DELETE /quiz/groups/{id}", middleware.InternalAuth(groupHandler.DeleteGroup, a.logger, apiKey))
+	//mux.HandleFunc("GET /quiz/groups", middleware.InternalAuth(groupHandler.GetAllGroups, a.logger, apiKey))
 
 	// Parameter routes
 	parameterHandler := handlers.NewParameterHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /quiz/parameters", middleware.VerifyToken(middleware.WithAdminRole(parameterHandler.GetAllParameters), a.authClient))
-	mux.HandleFunc("POST /quiz/parameters", middleware.VerifyToken(middleware.WithAdminRole(parameterHandler.CreateParameter), a.authClient))
-	mux.HandleFunc("PUT /quiz/parameters/{id}", middleware.VerifyToken(middleware.WithAdminRole(parameterHandler.UpdateParameter), a.authClient))
-	mux.HandleFunc("DELETE /quiz/parameters/{id}", middleware.VerifyToken(middleware.WithAdminRole(parameterHandler.DeleteParameter), a.authClient))
+	mux.HandleFunc("GET /quiz/parameters", middleware.InternalAuth(parameterHandler.GetAllParameters, a.logger, apiKey))
+	mux.HandleFunc("POST /quiz/parameters", middleware.InternalAuth(parameterHandler.CreateParameter, a.logger, apiKey))
+	mux.HandleFunc("PATCH /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.UpdateParameter, a.logger, apiKey))
+	mux.HandleFunc("DELETE /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.DeleteParameter, a.logger, apiKey))
 }

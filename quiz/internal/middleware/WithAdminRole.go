@@ -1,16 +1,18 @@
 package middleware
 
-import "net/http"
+import (
+	"go.uber.org/zap"
+	"net/http"
+)
 
-func WithAdminRole(next http.HandlerFunc) http.HandlerFunc {
+func InternalAuth(next http.HandlerFunc, logger *zap.Logger, validAPIKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		role, ok := r.Context().Value("user_role").(string)
-		if !ok {
-			http.Error(w, "User role not found", http.StatusUnauthorized)
-			return
-		}
-		if role != "admin" {
-			http.Error(w, "User is not an admin", http.StatusForbidden)
+		logger.Info("InternalAuth middleware")
+
+		apiKey := r.Header.Get("X-Api-Key")
+		if apiKey != validAPIKey {
+			logger.Warn("Invalid API key")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 		next(w, r)

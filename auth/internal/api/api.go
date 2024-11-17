@@ -75,7 +75,7 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("POST /auth/register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /auth/login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /auth/login/google", handlers.NewOauthLoginHandler(a.storage, a.logger).HandleGoogle)
-	router.HandleFunc("GET /auth/users/{id}", middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
+	router.HandleFunc("GET /auth/user", middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("PUT /auth/users/{id}", middleware.ValidateAccessToken(handlers.NewUpdateUserHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/verify", middleware.ValidateAccessToken(handlers.NewVerifyTokenHandler().Handle, a.storage))
 	router.HandleFunc("GET /auth/verifySession", middleware.ValidateSession(handlers.NewVerifySessionHandler(a.logger).Handle, a.storage))
@@ -85,6 +85,8 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	// internal
 	internalApiKey := os.Getenv("INTERNAL_API_KEY")
 	router.HandleFunc("GET /auth/users", middleware.InternalAuth(handlers.NewGetAllUsersHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
+	router.HandleFunc("GET /auth/users/{id}", middleware.InternalAuth(handlers.NewAdminGetUserHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
+	router.HandleFunc("PATCH /auth/users/{id}", middleware.InternalAuth(handlers.NewAdminUpdateUserHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 	router.HandleFunc("DELETE /auth/users/{id}", middleware.InternalAuth(handlers.NewDeleteUserHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 	router.HandleFunc("GET /auth/roles", middleware.InternalAuth(handlers.NewGetAllRolesHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 	router.HandleFunc("POST /auth/roles", middleware.InternalAuth(handlers.NewCreateRoleHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))

@@ -19,27 +19,29 @@ type ApiServer struct {
 	addr        string
 	storage     storage.Storage
 	logger      *zap.Logger
-	authClient  *clients.AuthClient
-	statsClient *clients.StatsClient
+	authClient  clients.AuthClient
+	statsClient clients.StatsClient
+	quizClient  clients.QuizClient
 }
 
-func NewApiServer(addr string, store storage.Storage, logger *zap.Logger, authClient *clients.AuthClient, statsClient *clients.StatsClient) *ApiServer {
+func NewApiServer(addr string, store storage.Storage, logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient, quizClient clients.QuizClient) *ApiServer {
 	return &ApiServer{
 		addr:        addr,
 		storage:     store,
 		logger:      logger,
 		authClient:  authClient,
 		statsClient: statsClient,
+		quizClient:  quizClient,
 	}
 }
 func (a *ApiServer) Run() {
 	mux := http.NewServeMux()
 	a.registerRoutes(mux)
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // Allow requests from this origin
+		AllowedOrigins:   []string{"http://localhost:3000", "https://predigrowee.agh.edu.pl"},
 		AllowCredentials: true,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},  // Add the methods you need
-		AllowedHeaders:   []string{"Authorization", "Content-Type"}, // Add the headers you need
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 	})
 	srv := &http.Server{
 		Addr:         a.addr,
@@ -73,7 +75,18 @@ func (a *ApiServer) Run() {
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	// users
-	mux.HandleFunc("GET /admin/users", middleware.VerifyAdmin(handlers.NewUsersHandler(a.storage, a.logger, a.authClient).GetUsers, a.authClient))
+	usersHandler := handlers.NewUsersHandler(a.storage, a.logger, a.authClient, a.statsClient)
+	mux.HandleFunc("GET /admin/users", middleware.VerifyAdmin(usersHandler.GetUsers, a.authClient))
+	mux.HandleFunc("GET /admin/users/{id}", middleware.VerifyAdmin(usersHandler.GetUser, a.authClient))
+	mux.HandleFunc("PATCH /admin/users/{id}", middleware.VerifyAdmin(usersHandler.UpdateUser, a.authClient))
+	mux.HandleFunc("DELETE /admin/users/{id}", middleware.VerifyAdmin(usersHandler.DeleteUser, a.authClient))
+
+	// quiz
+	quizHandler := handlers.NewQuizHandler(a.storage, a.logger, a.quizClient, a.statsClient)
+	mux.HandleFunc("GET /admin/questions", middleware.VerifyAdmin(quizHandler.GetAllQuestions, a.authClient))
+	mux.HandleFunc("GET /admin/parameters", middleware.VerifyAdmin(quizHandler.GetAllParameters, a.authClient))
+	mux.HandleFunc("PATCH /admin/parameters/{id}", middleware.VerifyAdmin(quizHandler.UpdateParameter, a.authClient))
+	mux.HandleFunc("GET /admin/options", middleware.VerifyAdmin(quizHandler.GetAllOptions, a.authClient))
 
 	// stats
 	mux.HandleFunc("GET /admin/allStats", handlers.NewAllStatsHandler(a.storage, a.logger).Handle)

@@ -122,5 +122,4 @@ func (h *QuestionHandler) GetAllQuestions(w http.ResponseWriter, _ *http.Request
 		h.logger.Error("Failed to encode response", zap.Error(err))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }

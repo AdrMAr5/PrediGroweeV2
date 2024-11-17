@@ -91,7 +91,7 @@ func (p *PostgresStorage) GetUserSessionBySessionID(sessionID string) (models.Us
 }
 
 func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
-	rows, err := p.db.Query("SELECT id, email, first_name, last_name, role, google_id FROM users ORDER BY id")
+	rows, err := p.db.Query("SELECT id, email, first_name, last_name, role, google_id, created_at FROM users ORDER BY id")
 	if err != nil {
 		return nil, fmt.Errorf("error fetching users: %w", err)
 	}
@@ -100,7 +100,7 @@ func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.Role, &user.GoogleID)
+		err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.Role, &user.GoogleID, &user.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning user: %w", err)
 		}

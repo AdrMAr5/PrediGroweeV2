@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"stats/internal/models"
 	"stats/internal/storage"
+	"strconv"
 )
 
 type GetUserStatsHandler struct {
@@ -18,7 +19,18 @@ func NewGetUserStatsHandler(storage storage.Storage, logger *zap.Logger) *GetUse
 }
 
 func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("user_id").(int)
+	var userID int
+	userId := r.PathValue("id")
+	if userId == "" {
+		userID = r.Context().Value("user_id").(int)
+	} else {
+		var err error
+		userID, err = strconv.Atoi(userId)
+		if err != nil {
+			http.Error(rw, "invalid user id", http.StatusBadRequest)
+		}
+	}
+
 	stats := models.UserStats{
 		TotalQuestions: make(map[models.QuizMode]int),
 		CorrectAnswers: make(map[models.QuizMode]int),
@@ -42,6 +54,7 @@ func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	fmt.Println(stats)
 	err := stats.ToJSON(rw)
 	if err != nil {
 		h.logger.Error("failed to encode stats")
