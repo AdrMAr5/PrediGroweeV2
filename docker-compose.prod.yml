@@ -58,6 +58,17 @@ services:
       expose:
           - "5432"
 
+  admin_db:
+      image: postgres:13
+      environment:
+          - POSTGRES_USER=${ADMIN_DB_USER}
+          - POSTGRES_PASSWORD=${ADMIN_DB_PASSWORD}
+          - POSTGRES_DB=admin_db
+      volumes:
+          - admin_db_data:/var/lib/postgresql/data
+      expose:
+          - "5432"
+
   auth:
     build:
       context: ./auth
@@ -67,9 +78,12 @@ services:
       - SERVICE_NAME=auth
       - DB_HOST=auth_db
       - DB_PORT=5432
+      - DB_NAME=auth_db
       - DB_USER=${AUTH_DB_USER}
       - DB_PASSWORD=${AUTH_DB_PASSWORD}
-      - DB_NAME=auth_db
+      - JWT_SECRET=${JWT_SECRET}
+    expose:
+      - "8080"
     depends_on:
       - auth_db
 
@@ -82,9 +96,11 @@ services:
       - SERVICE_NAME=quiz
       - DB_HOST=quiz_db
       - DB_PORT=5432
+      - DB_NAME=quiz_db
       - DB_USER=${QUIZ_DB_USER}
       - DB_PASSWORD=${QUIZ_DB_PASSWORD}
-      - DB_NAME=quiz_db
+    expose:
+      - "8080"
     depends_on:
       - quiz_db
       - auth
@@ -98,9 +114,11 @@ services:
       - SERVICE_NAME=stats
       - DB_HOST=stats_db
       - DB_PORT=5432
+      - DB_NAME=stats_db
       - DB_USER=${STATS_DB_USER}
       - DB_PASSWORD=${STATS_DB_PASSWORD}
-      - DB_NAME=stats_db
+    expose:
+      - "8080"
     depends_on:
       - stats_db
       - auth
@@ -110,35 +128,70 @@ services:
       context: ./images
       dockerfile: Dockerfile
     environment:
-      - ENV=local
+      - ENV=production
       - SERVICE_NAME=images
       - DB_HOST=images_db
       - DB_PORT=5432
+      - DB_NAME=images_db
       - DB_USER=${IMAGES_DB_USER}
       - DB_PASSWORD=${IMAGES_DB_PASSWORD}
-      - DB_NAME=images_db
+    expose:
+      - "8080"
     volumes:
       - ./images_data:/app/images
     depends_on:
       - auth
       - images_db
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    environment:
+      - ENV=production
+      - SERVICE_NAME=admin
+      - DB_HOST=admin_db
+      - DB_PORT=5432
+      - DB_NAME=admin_db
+      - DB_USER=${ADMIN_DB_USER}
+      - DB_PASSWORD=${ADMIN_DB_PASSWORD}
+
+    expose:
+      - "8080"
+    depends_on:
+      - auth
+      - quiz
+      - stats
+      - images
 
   frontend:
     build:
       context: ../PrediGroweeV2-UI
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        - NEXT_PUBLIC_AUTH_SERVICE_URL=https://predigrowee.agh.edu.pl/api/auth
+        - NEXT_PUBLIC_QUIZ_SERVICE_URL=https://predigrowee.agh.edu.pl/api/quiz
+        - NEXT_PUBLIC_STATS_SERVICE_URL=https://predigrowee.agh.edu.pl/api/stats
+        - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
+        - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
+        - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
     environment:
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID= ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       - NEXT_PUBLIC_AUTH_SERVICE_URL=https://predigrowee.agh.edu.pl/api/auth
       - NEXT_PUBLIC_QUIZ_SERVICE_URL=https://predigrowee.agh.edu.pl/api/quiz
       - NEXT_PUBLIC_STATS_SERVICE_URL=https://predigrowee.agh.edu.pl/api/stats
       - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
+      - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
+      - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+    expose:
+      - "3000"
 
 volumes:
   auth_db_data:
   quiz_db_data:
   stats_db_data:
   images_db_data:
-  image_data:
+  admin_db_data:
+  images_data:
 
 

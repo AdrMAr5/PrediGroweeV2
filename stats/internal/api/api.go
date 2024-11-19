@@ -75,10 +75,14 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/health", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
+	internalApiKey := os.Getenv("INTERNAL_API_KEY")
 	//internal
-	mux.HandleFunc("POST /stats/saveSession", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveSession, a.logger))
-	mux.HandleFunc("POST /stats/{quizSessionId}/saveResponse", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveResponse, a.logger))
-	mux.HandleFunc("POST /stats/{quizSessionId}/finish", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).FinishSession, a.logger))
+	mux.HandleFunc("POST /stats/saveSession", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveSession, a.logger, internalApiKey))
+	mux.HandleFunc("POST /stats/{quizSessionId}/saveResponse", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveResponse, a.logger, internalApiKey))
+	mux.HandleFunc("POST /stats/{quizSessionId}/finish", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).FinishSession, a.logger, internalApiKey))
+
+	// admin
+	mux.HandleFunc("GET /stats/users/{id}", middleware.InternalAuth(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 
 	//external
 	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.authClient))

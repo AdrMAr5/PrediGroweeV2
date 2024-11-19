@@ -2,13 +2,14 @@ package middleware
 
 import (
 	"admin/clients"
+	"admin/internal/models"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-func VerifyAdmin(next http.HandlerFunc, authClient *clients.AuthClient) http.HandlerFunc {
+func VerifyAdmin(next http.HandlerFunc, authClient clients.AuthClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accessToken, err := ExtractAccessTokenFromRequest(r)
 		log.Println("Extracted token: ", accessToken)
@@ -23,7 +24,7 @@ func VerifyAdmin(next http.HandlerFunc, authClient *clients.AuthClient) http.Han
 			log.Println("failed to verify token: ", err)
 			return
 		}
-		if userData.Role != "admin" {
+		if userData.Role != models.RoleAdmin {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			log.Println("not admin user attempted admin action")
 			return

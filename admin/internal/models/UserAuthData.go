@@ -12,11 +12,11 @@ const (
 	RoleUser  UserRole = "user"
 )
 
-type UserData struct {
+type UserAuthData struct {
 	UserID int      `json:"user_id"`
 	Role   UserRole `json:"role"`
 }
 
-func (u *UserData) FromJSON(ioReader io.Reader) error {
+func (u *UserAuthData) FromJSON(ioReader io.Reader) error {
 	return json.NewDecoder(ioReader).Decode(u)
 }

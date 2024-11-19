@@ -13,10 +13,10 @@ type Parameter struct {
 }
 
 type ParameterValue struct {
-	ParameterID int     `json:"parameter_id"`
-	Value1      float64 `json:"value1"`
-	Value2      float64 `json:"value2"`
-	Value3      float64 `json:"value3"`
+	ParameterID int      `json:"parameter_id"`
+	Value1      float64  `json:"value1"`
+	Value2      float64  `json:"value2"`
+	Value3      *float64 `json:"value3,omitempty"`
 }
 
 func (p *ParameterValue) ToJSON(w io.Writer) error {

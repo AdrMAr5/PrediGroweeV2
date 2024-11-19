@@ -49,14 +49,15 @@ func main() {
 		logger.Fatal("Failed to ping database", zap.Error(err))
 	}
 	postgresStorage := storage.NewPostgresStorage(db, logger)
-	authClient := clients.NewAuthClient("http://auth:8080/auth", logger)
-	statsClient := clients.NewStatsClient("http://stats:8080/stats", logger)
-	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient, statsClient)
+	authClient := clients.NewRestAuthClient("http://auth:8080/auth", os.Getenv("INTERNAL_API_KEY"), logger)
+	statsClient := clients.NewStatsRestClient("http://stats:8080/stats", os.Getenv("INTERNAL_API_KEY"), logger)
+	quizClient := clients.NewQuizRestClient("http://quiz:8080/quiz", os.Getenv("INTERNAL_API_KEY"), logger)
+	apiServer := api.NewApiServer(":8080", postgresStorage, logger, authClient, statsClient, quizClient)
 	apiServer.Run()
 }
 func connectToPostgres() (*sql.DB, error) {
 	env := os.Getenv("ENV")
-	sslMode := "require"
+	sslMode := "disable"
 	if env == "local" {
 		sslMode = "disable"
 	}

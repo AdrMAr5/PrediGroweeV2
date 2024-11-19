@@ -21,6 +21,7 @@ type User struct {
 	GoogleID  string   `json:"google_id,omitempty"`
 	Password  string   `json:"password,omitempty"`
 	Role      UserRole `json:"role"`
+	CreatedAt string   `json:"created_at"`
 }
 
 func (u *User) Validate() error {
@@ -53,9 +54,10 @@ type UserResponse struct {
 }
 
 type UserUpdatePayload struct {
-	FirstName *string `json:"first_name"`
-	LastName  *string `json:"last_name"`
-	Pwd       *string `json:"pwd"`
+	FirstName *string   `json:"first_name"`
+	LastName  *string   `json:"last_name"`
+	Pwd       *string   `json:"pwd"`
+	Role      *UserRole `json:"role"`
 }
 
 func (u *UserUpdatePayload) FromJSON(r io.Reader) error {
