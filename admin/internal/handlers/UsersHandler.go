@@ -60,7 +60,7 @@ func (u *UsersHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (u *UsersHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (u *UsersHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("id")
 	user, err := u.authClient.GetUser(userID)
 	userStats, err := u.statsClient.GetUserStats(userID)

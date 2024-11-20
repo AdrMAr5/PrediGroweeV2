@@ -18,7 +18,7 @@ type UserStats struct {
 	CorrectAnswers map[QuizMode]int
 	Accuracy       map[QuizMode]float64
 }
-type QuestionStats struct {
+type QuestionStat struct {
 	QuestionID int
 	Answer     string
 	IsCorrect  bool
@@ -29,7 +29,7 @@ type QuizStats struct {
 	TotalQuestions int
 	CorrectAnswers int
 	Accuracy       float64
-	Questions      []QuestionStats
+	Questions      []QuestionStat
 }
 
 func (s *QuizStats) ToJSON(w io.Writer) error {
@@ -38,4 +38,10 @@ func (s *QuizStats) ToJSON(w io.Writer) error {
 
 func (u *UserStats) ToJSON(w io.Writer) error {
 	return json.NewEncoder(w).Encode(u)
+}
+
+type QuestionAllStats struct {
+	QuestionID int `json:"question_id"`
+	Total      int `json:"total"`
+	Correct    int `json:"correct"`
 }

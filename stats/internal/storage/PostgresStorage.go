@@ -14,13 +14,16 @@ type Storage interface {
 	SaveSession(session *models.QuizSession) error
 	GetUserStatsForMode(userID int, mode models.QuizMode) (correctCount int, wrongCount int, err error)
 	GetQuizSessionByID(quizSessionID int) (*models.QuizSession, error)
-	GetQuizQuestionsStats(quizSessionID int) ([]models.QuestionStats, error)
+	GetQuizQuestionsStats(quizSessionID int) ([]models.QuestionStat, error)
 	GetUserQuizStats(quizSessionID int) (*models.QuizStats, error)
 	FinishQuizSession(quizSessionID int) error
 
 	// survey
 	SaveSurveyResponse(response *models.SurveyResponse) error
 	GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error)
+	GetAllResponses() ([]models.QuestionResponse, error)
+	GetStatsForQuestion(id int) (models.QuestionAllStats, error)
+	GetStatsForAllQuestions() ([]models.QuestionAllStats, error)
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -92,16 +95,16 @@ func (p *PostgresStorage) GetQuizSessionByID(quizSessionID int) (*models.QuizSes
 	}
 	return &session, nil
 }
-func (p *PostgresStorage) GetQuizQuestionsStats(quizSessionID int) ([]models.QuestionStats, error) {
+func (p *PostgresStorage) GetQuizQuestionsStats(quizSessionID int) ([]models.QuestionStat, error) {
 	query := `select a.question_id, a.answer, a.correct from answers a
 where a.session_id = $1`
 	rows, err := p.db.Query(query, quizSessionID)
 	if err != nil {
 		return nil, err
 	}
-	var questionsStats []models.QuestionStats
+	var questionsStats []models.QuestionStat
 	for rows.Next() {
-		var qs models.QuestionStats
+		var qs models.QuestionStat
 		err = rows.Scan(&qs.QuestionID, &qs.Answer, &qs.IsCorrect)
 		if err != nil {
 			return nil, err
@@ -154,4 +157,59 @@ func (p *PostgresStorage) GetSurveyResponseForUser(userID int) (*models.SurveyRe
 	var surveyResponses models.SurveyResponse
 	err := p.db.QueryRow(query, userID).Scan(&surveyResponses.UserID, &surveyResponses.Gender, &surveyResponses.Age, &surveyResponses.VisionDefect, &surveyResponses.Education, &surveyResponses.Experience, &surveyResponses.Country, &surveyResponses.Name, &surveyResponses.Surname)
 	return &surveyResponses, err
+}
+func (p *PostgresStorage) GetAllResponses() ([]models.QuestionResponse, error) {
+	query := `SELECT user_id, question_id, answer, correct, answer_time FROM answers
+    			join quiz_sessions on answers.session_id = quiz_sessions.session_id
+                order by answer_time desc;`
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	var stats []models.QuestionResponse
+	for rows.Next() {
+		var stat models.QuestionResponse
+		err = rows.Scan(&stat.UserID, &stat.QuestionID, &stat.Answer, &stat.IsCorrect, &stat.Time)
+		if err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+func (p *PostgresStorage) GetStatsForQuestion(id int) (models.QuestionAllStats, error) {
+	query := `SELECT question_id, count(*), sum(CASE WHEN correct THEN 1 ELSE 0 END) FROM answers
+				WHERE question_id = $1
+				group by question_id`
+	var stats models.QuestionAllStats
+	err := p.db.QueryRow(query, id).Scan(&stats.QuestionID, &stats.Total, &stats.Correct)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.QuestionAllStats{}, nil
+		}
+		return models.QuestionAllStats{}, err
+	}
+	return stats, nil
+}
+
+func (p *PostgresStorage) GetStatsForAllQuestions() ([]models.QuestionAllStats, error) {
+	query := `SELECT question_id, count(*), sum(CASE WHEN correct THEN 1 ELSE 0 END) FROM answers
+				group by question_id`
+	rows, err := p.db.Query(query)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []models.QuestionAllStats{}, nil
+		}
+		return nil, err
+	}
+	var stats []models.QuestionAllStats
+	for rows.Next() {
+		var stat models.QuestionAllStats
+		err = rows.Scan(&stat.QuestionID, &stat.Total, &stat.Correct)
+		if err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
 }

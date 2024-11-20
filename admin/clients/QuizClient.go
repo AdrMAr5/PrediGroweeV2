@@ -14,6 +14,7 @@ type QuizClient interface {
 	GetAllParameters() ([]models.Parameter, error)
 	UpdateParameter(id string, parameter models.Parameter) error
 	GetAllOptions() ([]models.Option, error)
+	GetQuestion(id string) (models.Question, error)
 }
 
 type QuizRestClient struct {
@@ -63,6 +64,24 @@ func (c *QuizRestClient) GetAllQuestions() ([]models.Question, error) {
 	var questions []models.Question
 	err = json.NewDecoder(resp.Body).Decode(&questions)
 	return questions, err
+}
+func (c *QuizRestClient) GetQuestion(id string) (models.Question, error) {
+	req, err := c.NewRequestWithAuth("GET", fmt.Sprintf("/questions/%s", id), nil)
+	if err != nil {
+		return models.Question{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.Question{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return models.Question{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var question models.Question
+	err = json.NewDecoder(resp.Body).Decode(&question)
+	return question, err
 }
 
 func (c *QuizRestClient) GetAllParameters() ([]models.Parameter, error) {
