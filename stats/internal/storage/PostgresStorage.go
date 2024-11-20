@@ -21,9 +21,15 @@ type Storage interface {
 	// survey
 	SaveSurveyResponse(response *models.SurveyResponse) error
 	GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error)
+
+	// stats
 	GetAllResponses() ([]models.QuestionResponse, error)
 	GetStatsForQuestion(id int) (models.QuestionAllStats, error)
 	GetStatsForAllQuestions() ([]models.QuestionAllStats, error)
+	GetActivityStats() ([]models.ActivityStats, error)
+	CountQuizSessions() (int, error)
+	CountAnswers() (int, error)
+	CountCorrectAnswers() (int, error)
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -212,4 +218,52 @@ func (p *PostgresStorage) GetStatsForAllQuestions() ([]models.QuestionAllStats, 
 		stats = append(stats, stat)
 	}
 	return stats, nil
+}
+
+func (p *PostgresStorage) GetActivityStats() ([]models.ActivityStats, error) {
+	query := `SELECT date_trunc('day', answer_time) as date, count(*), sum(CASE WHEN correct THEN 1 ELSE 0 END) FROM answers
+				group by date_trunc('day', answer_time)
+				order by date_trunc('day', answer_time)
+				limit 10`
+	var stats []models.ActivityStats
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return []models.ActivityStats{}, err
+	}
+	for rows.Next() {
+		var stat models.ActivityStats
+		err = rows.Scan(&stat.Date, &stat.Total, &stat.Correct)
+		if err != nil {
+			return []models.ActivityStats{}, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
+func (p *PostgresStorage) CountQuizSessions() (int, error) {
+	var count int
+	err := p.db.QueryRow(`SELECT count(*) FROM quiz_sessions`).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (p *PostgresStorage) CountAnswers() (int, error) {
+	var count int
+	err := p.db.QueryRow(`SELECT count(*) FROM answers`).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (p *PostgresStorage) CountCorrectAnswers() (int, error) {
+	var count int
+	err := p.db.QueryRow(`SELECT count(*) FROM answers WHERE correct = true`).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

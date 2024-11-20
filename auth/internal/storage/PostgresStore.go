@@ -24,6 +24,9 @@ type Store interface {
 	CreateRole(role models.Role) (models.Role, error)
 	UpdateRole(role models.Role) error
 	DeleteRole(id int) error
+	GetUsersCount() int
+	GetActiveUsersCount() int
+	GetLast24hRegisteredCount() int
 }
 type FirestoreStorage struct {
 	config string
@@ -189,4 +192,31 @@ func (p *PostgresStorage) DeleteRole(id int) error {
 	}
 
 	return nil
+}
+
+func (p *PostgresStorage) GetUsersCount() int {
+	var count int
+	err := p.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
+func (p *PostgresStorage) GetActiveUsersCount() int {
+	var count int
+	err := p.db.QueryRow("SELECT COUNT(*) FROM users_sessions").Scan(&count)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
+func (p *PostgresStorage) GetLast24hRegisteredCount() int {
+	var count int
+	err := p.db.QueryRow("SELECT COUNT(*) FROM users WHERE created_at > NOW() - INTERVAL '24 hours'").Scan(&count)
+	if err != nil {
+		return 0
+	}
+	return count
 }

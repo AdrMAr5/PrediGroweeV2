@@ -30,6 +30,8 @@ type Store interface {
 
 	// options
 	GetAllOptions() ([]models.Option, error)
+	CreateOption(option models.Option) (models.Option, error)
+	UpdateOption(id int, option models.Option) error
 
 	// cases
 	CreateCase(newCase models.Case) (models.Case, error)
@@ -38,6 +40,7 @@ type Store interface {
 	GetAllCases() ([]models.Case, error)
 	GetCaseByID(id int) (models.Case, error)
 	CreateCaseParameter(caseID int, parameter models.ParameterValue) (models.ParameterValue, error)
+	UpdateCaseParameters(caseID int, parameters []models.Parameter, values []models.ParameterValue) error
 
 	// parameters
 	CreateParameter(parameter models.Parameter) (models.Parameter, error)
@@ -49,6 +52,7 @@ type Store interface {
 	//groups
 	GetGroupQuestionsIDsRandomOrder(groupID int) ([]int, error)
 	GetNextQuestionGroupID(currentGroup int) (int, error)
+	DeleteOption(id int) error
 }
 
 type PostgresStorage struct {
@@ -227,7 +231,7 @@ func (s *PostgresStorage) GetUserLastQuizSession(userID int) (*models.QuizSessio
 func (s *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
 	query := `
         SELECT q.id, q.question, q.prediction_age,
-               c.id, c.code, c.patient_gender, c.age1, c.age2, c.age3
+               c.id, c.code, c.patient_gender, c.age1, c.age2, c.age3, q.group_number
         FROM questions q
         JOIN cases c ON q.case_id = c.id
         WHERE q.id = $1`
@@ -243,6 +247,7 @@ func (s *PostgresStorage) GetQuestionByID(id int) (models.Question, error) {
 		&question.Case.Age1,
 		&question.Case.Age2,
 		&question.Case.Age3,
+		&question.Group,
 	)
 	if err != nil {
 		return question, err
@@ -342,8 +347,10 @@ func (s *PostgresStorage) GetAllQuestions() ([]models.Question, error) {
 
 func (s *PostgresStorage) GetAllOptions() ([]models.Option, error) {
 	query := `
-		SELECT id, option from options
-		ORDER BY id`
+		SELECT o.id, o.option, count(qo.id) from options o
+		      left join public.question_options qo on o.id = qo.option_id
+				group by o.id, o.option ORDER BY o.id 
+		`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -352,7 +359,7 @@ func (s *PostgresStorage) GetAllOptions() ([]models.Option, error) {
 	var options []models.Option
 	for rows.Next() {
 		var option models.Option
-		err := rows.Scan(&option.ID, &option.Option)
+		err := rows.Scan(&option.ID, &option.Option, &option.Questions)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +421,7 @@ func (s *PostgresStorage) CreateQuestion(payload models.QuestionPayload) (models
 func (s *PostgresStorage) UpdateQuestionByID(questionID int, payload models.QuestionPayload) (models.QuestionPayload, error) {
 	query := `
         UPDATE questions
-        SET question = $1, prediction_age = $2, case_id = $3
+        SET question = $1, prediction_age = $2, case_id = $3, group_number = $5
         WHERE id = $4`
 
 	_, err := s.db.Exec(
@@ -423,6 +430,7 @@ func (s *PostgresStorage) UpdateQuestionByID(questionID int, payload models.Ques
 		payload.PredictionAge,
 		payload.CaseID,
 		questionID,
+		payload.Group,
 	)
 
 	payload.ID = questionID
@@ -685,4 +693,69 @@ func (s *PostgresStorage) getCaseParameters(caseID int) ([]models.Parameter, []m
 		parameterValues = append(parameterValues, pv)
 	}
 	return parameters, parameterValues, nil
+}
+
+func (s *PostgresStorage) UpdateCaseParameters(caseID int, parameters []models.Parameter, values []models.ParameterValue) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Delete existing parameters for this case
+	_, err = tx.Exec("DELETE FROM case_parameters WHERE case_id = $1", caseID)
+	if err != nil {
+		return err
+	}
+
+	// Insert new parameters
+	stmt, err := tx.Prepare(`
+        INSERT INTO case_parameters (case_id, parameter_id, value_1, value_2, value_3) 
+        VALUES ($1, $2, $3, $4, $5)
+    `)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for i := range parameters {
+		_, err = stmt.Exec(
+			caseID,
+			parameters[i].ID,
+			values[i].Value1,
+			values[i].Value2,
+			values[i].Value3,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (s *PostgresStorage) CreateOption(option models.Option) (models.Option, error) {
+	query := `
+		INSERT INTO options (option)
+		VALUES ($1)
+		RETURNING id`
+
+	err := s.db.QueryRow(query, option.Option).Scan(&option.ID)
+	return option, err
+}
+
+func (s *PostgresStorage) UpdateOption(id int, option models.Option) error {
+	query := `
+		UPDATE options
+		SET option = $1
+		WHERE id = $2`
+
+	_, err := s.db.Exec(query, option.Option, id)
+	return err
+}
+
+func (s *PostgresStorage) DeleteOption(id int) error {
+	query := "DELETE FROM options WHERE id = $1"
+	_, err := s.db.Exec(query, id)
+	return err
 }

@@ -86,12 +86,20 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/questions", middleware.VerifyAdmin(quizHandler.GetAllQuestions, a.authClient))
 	mux.HandleFunc("GET /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.GetQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/parameters", middleware.VerifyAdmin(quizHandler.GetAllParameters, a.authClient))
+	mux.HandleFunc("POST /admin/parameters", middleware.VerifyAdmin(quizHandler.CreateParameter, a.authClient))
 	mux.HandleFunc("PATCH /admin/parameters/{id}", middleware.VerifyAdmin(quizHandler.UpdateParameter, a.authClient))
 	mux.HandleFunc("GET /admin/options", middleware.VerifyAdmin(quizHandler.GetAllOptions, a.authClient))
+	mux.HandleFunc("DELETE /admin/options/{id}", middleware.VerifyAdmin(quizHandler.DeleteOption, a.authClient))
+	mux.HandleFunc("PATCH /admin/options/{id}", middleware.VerifyAdmin(quizHandler.UpdateOption, a.authClient))
+	mux.HandleFunc("POST /admin/options", middleware.VerifyAdmin(quizHandler.CreateOption, a.authClient))
+	mux.HandleFunc("PATCH /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.UpdateQuestion, a.authClient))
 
 	// stats
 	statsHandler := handlers.NewAllStatsHandler(a.storage, a.logger, a.statsClient)
 	mux.HandleFunc("GET /admin/responses", middleware.VerifyAdmin(statsHandler.GetAllResponses, a.authClient))
-	mux.HandleFunc("GET /admin/stats/{questionId}", middleware.VerifyAdmin(statsHandler.GetStatsForQuestion, a.authClient))
+	mux.HandleFunc("GET /admin/stats/questions/{questionId}", middleware.VerifyAdmin(statsHandler.GetStatsForQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/stats/questions", middleware.VerifyAdmin(statsHandler.GetStatsForAllQuestions, a.authClient))
+	mux.HandleFunc("GET /admin/stats/activity", middleware.VerifyAdmin(statsHandler.GetActivityStats, a.authClient))
+
+	mux.HandleFunc("GET /admin/dashboard", middleware.VerifyAdmin(handlers.NewSummaryHandler(a.storage, a.logger, a.authClient, a.statsClient, a.quizClient).GetSummary, a.authClient))
 }

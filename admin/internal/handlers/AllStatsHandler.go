@@ -72,3 +72,20 @@ func (h *AllStatsHandler) GetStatsForAllQuestions(w http.ResponseWriter, r *http
 		return
 	}
 }
+
+func (h *AllStatsHandler) GetActivityStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.statsClient.GetActivityStats()
+	if err != nil {
+		h.logger.Error("failed to get stats", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	statsJson, _ := json.Marshal(stats)
+	_, err = w.Write(statsJson)
+	if err != nil {
+		h.logger.Error("failed to write response", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+}

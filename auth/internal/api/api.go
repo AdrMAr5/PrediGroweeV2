@@ -93,6 +93,8 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("PUT /auth/roles/{id}", middleware.InternalAuth(handlers.NewUpdateRoleHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 	router.HandleFunc("DELETE /auth/roles/{id}", middleware.InternalAuth(handlers.NewDeleteRoleHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
 
+	router.HandleFunc("GET /auth/summary", middleware.InternalAuth(handlers.NewSummaryHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
+
 }
 
 func (a *ApiServer) HealthCheckHandler(w http.ResponseWriter, _ *http.Request) {

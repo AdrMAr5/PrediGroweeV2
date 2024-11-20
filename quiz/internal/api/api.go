@@ -86,6 +86,8 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 
 	//// internal api
 	apiKey := os.Getenv("INTERNAL_API_KEY")
+
+	mux.HandleFunc("GET /quiz/summary", middleware.InternalAuth(handlers.NewSummaryHandler(a.storage, a.logger).Handle, a.logger, apiKey))
 	//// Case routes
 	//caseHandler := handlers.NewCaseHandler(a.storage, a.logger)
 	//mux.HandleFunc("GET /quiz/cases", middleware.InternalAuth(caseHandler.GetAllCases, a.logger, apiKey))
@@ -99,13 +101,16 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /quiz/q/{id}", middleware.VerifyToken(questionHandler.GetQuestion, a.authClient))
 	mux.HandleFunc("GET /quiz/questions/{id}", middleware.InternalAuth(questionHandler.GetQuestion, a.logger, apiKey))
 	mux.HandleFunc("POST /quiz/questions", middleware.InternalAuth(questionHandler.CreateQuestion, a.logger, apiKey))
-	mux.HandleFunc("PUT /quiz/questions/{id}", middleware.InternalAuth(questionHandler.UpdateQuestion, a.logger, apiKey))
+	mux.HandleFunc("PATCH /quiz/questions/{id}", middleware.InternalAuth(questionHandler.UpdateQuestion, a.logger, apiKey))
 	mux.HandleFunc("DELETE /quiz/questions/{id}", middleware.InternalAuth(questionHandler.DeleteQuestion, a.logger, apiKey))
 	mux.HandleFunc("GET /quiz/questions", middleware.InternalAuth(questionHandler.GetAllQuestions, a.logger, apiKey))
 
 	// options routes
 	optionsHandler := handlers.NewOptionsHandler(a.storage, a.logger)
 	mux.HandleFunc("GET /quiz/options", middleware.InternalAuth(optionsHandler.GetAllOptions, a.logger, apiKey))
+	mux.HandleFunc("POST /quiz/options", middleware.InternalAuth(optionsHandler.CreateOption, a.logger, apiKey))
+	mux.HandleFunc("PATCH /quiz/options/{id}", middleware.InternalAuth(optionsHandler.UpdateOption, a.logger, apiKey))
+	mux.HandleFunc("DELETE /quiz/options/{id}", middleware.InternalAuth(optionsHandler.DeleteOption, a.logger, apiKey))
 	// Group routes
 	groupHandler := handlers.NewGroupHandler(a.storage, a.logger)
 	mux.HandleFunc("POST /quiz/groups", middleware.InternalAuth(groupHandler.CreateGroup, a.logger, apiKey))

@@ -15,3 +15,9 @@ type QuestionStats struct {
 	Total      int `json:"total"`
 	Correct    int `json:"correct"`
 }
+
+type ActivityStats struct {
+	Date    time.Time `json:"date"`
+	Total   int       `json:"total"`
+	Correct int       `json:"correct"`
+}

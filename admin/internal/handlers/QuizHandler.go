@@ -80,7 +80,7 @@ func (h *QuizHandler) UpdateParameter(w http.ResponseWriter, r *http.Request) {
 	err = h.quizClient.UpdateParameter(paramId, updatedParameter)
 }
 
-func (h *QuizHandler) GetAllOptions(w http.ResponseWriter, r *http.Request) {
+func (h *QuizHandler) GetAllOptions(w http.ResponseWriter, _ *http.Request) {
 	options, err := h.quizClient.GetAllOptions()
 	if err != nil {
 		h.logger.Error("Failed to get options", zap.Error(err))
@@ -116,6 +116,98 @@ func (h *QuizHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error("Failed to write response", zap.Error(err))
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *QuizHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
+	questionId := r.PathValue("id")
+	updatedQuestion := models.Question{}
+	err := json.NewDecoder(r.Body).Decode(&updatedQuestion)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	err = h.quizClient.UpdateQuestion(questionId, updatedQuestion)
+	if err != nil {
+		h.logger.Error("Failed to update question", zap.Error(err))
+		http.Error(w, "Failed to update question", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *QuizHandler) CreateParameter(w http.ResponseWriter, r *http.Request) {
+	newParameter := models.Parameter{}
+	err := json.NewDecoder(r.Body).Decode(&newParameter)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	param, err := h.quizClient.CreateParameter(newParameter)
+	if err != nil {
+		h.logger.Error("Failed to create parameter", zap.Error(err))
+		http.Error(w, "Failed to create parameter", http.StatusInternalServerError)
+		return
+	}
+	paramJSON, err := json.Marshal(param)
+	if err != nil {
+		h.logger.Error("Failed to marshal parameter", zap.Error(err))
+		http.Error(w, "Failed to marshal parameter", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(paramJSON)
+}
+
+func (h *QuizHandler) UpdateOption(w http.ResponseWriter, r *http.Request) {
+	optionId := r.PathValue("id")
+	updatedOption := models.Option{}
+	err := json.NewDecoder(r.Body).Decode(&updatedOption)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	err = h.quizClient.UpdateOption(optionId, updatedOption)
+	if err != nil {
+		h.logger.Error("Failed to update option", zap.Error(err))
+		http.Error(w, "Failed to update option", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *QuizHandler) CreateOption(w http.ResponseWriter, r *http.Request) {
+	newOption := models.Option{}
+	err := json.NewDecoder(r.Body).Decode(&newOption)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	option, err := h.quizClient.CreateOption(newOption)
+	if err != nil {
+		h.logger.Error("Failed to create option", zap.Error(err))
+		http.Error(w, "Failed to create option", http.StatusInternalServerError)
+		return
+	}
+	optionJSON, err := json.Marshal(option)
+	if err != nil {
+		h.logger.Error("Failed to marshal option", zap.Error(err))
+		http.Error(w, "Failed to marshal option", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(optionJSON)
+}
+
+func (h *QuizHandler) DeleteOption(w http.ResponseWriter, r *http.Request) {
+	optionId := r.PathValue("id")
+	err := h.quizClient.DeleteOption(optionId)
+	if err != nil {
+		h.logger.Error("Failed to delete option", zap.Error(err))
+		http.Error(w, "Failed to delete option", http.StatusInternalServerError)
 		return
 	}
 }
