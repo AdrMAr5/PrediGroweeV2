@@ -92,7 +92,7 @@ func (h *QuizStatsHandler) SaveResponse(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	sessionID, err := strconv.Atoi(sessionId)
-	h.logger.Info("SaveResponseHandler.Handle")
+	h.logger.Info("SaveResponseHandler.GetResponses")
 	var response models.QuestionResponse
 	err = response.FromJSON(r.Body)
 	h.logger.Info(fmt.Sprintf("response to save: %+v", response))

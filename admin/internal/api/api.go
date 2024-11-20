@@ -77,17 +77,21 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	// users
 	usersHandler := handlers.NewUsersHandler(a.storage, a.logger, a.authClient, a.statsClient)
 	mux.HandleFunc("GET /admin/users", middleware.VerifyAdmin(usersHandler.GetUsers, a.authClient))
-	mux.HandleFunc("GET /admin/users/{id}", middleware.VerifyAdmin(usersHandler.GetUser, a.authClient))
+	mux.HandleFunc("GET /admin/users/{id}", middleware.VerifyAdmin(usersHandler.GetUserDetails, a.authClient))
 	mux.HandleFunc("PATCH /admin/users/{id}", middleware.VerifyAdmin(usersHandler.UpdateUser, a.authClient))
 	mux.HandleFunc("DELETE /admin/users/{id}", middleware.VerifyAdmin(usersHandler.DeleteUser, a.authClient))
 
 	// quiz
 	quizHandler := handlers.NewQuizHandler(a.storage, a.logger, a.quizClient, a.statsClient)
 	mux.HandleFunc("GET /admin/questions", middleware.VerifyAdmin(quizHandler.GetAllQuestions, a.authClient))
+	mux.HandleFunc("GET /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.GetQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/parameters", middleware.VerifyAdmin(quizHandler.GetAllParameters, a.authClient))
 	mux.HandleFunc("PATCH /admin/parameters/{id}", middleware.VerifyAdmin(quizHandler.UpdateParameter, a.authClient))
 	mux.HandleFunc("GET /admin/options", middleware.VerifyAdmin(quizHandler.GetAllOptions, a.authClient))
 
 	// stats
-	mux.HandleFunc("GET /admin/allStats", handlers.NewAllStatsHandler(a.storage, a.logger).Handle)
+	statsHandler := handlers.NewAllStatsHandler(a.storage, a.logger, a.statsClient)
+	mux.HandleFunc("GET /admin/responses", middleware.VerifyAdmin(statsHandler.GetAllResponses, a.authClient))
+	mux.HandleFunc("GET /admin/stats/{questionId}", middleware.VerifyAdmin(statsHandler.GetStatsForQuestion, a.authClient))
+	mux.HandleFunc("GET /admin/stats/questions", middleware.VerifyAdmin(statsHandler.GetStatsForAllQuestions, a.authClient))
 }

@@ -96,3 +96,26 @@ func (h *QuizHandler) GetAllOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(optionsJSON)
 }
+
+func (h *QuizHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
+	questionId := r.PathValue("id")
+	question, err := h.quizClient.GetQuestion(questionId)
+	if err != nil {
+		h.logger.Error("Failed to get question", zap.Error(err))
+		http.Error(w, "Failed to get question", http.StatusInternalServerError)
+		return
+	}
+	questionJSON, err := json.Marshal(question)
+	if err != nil {
+		h.logger.Error("Failed to marshal question", zap.Error(err))
+		http.Error(w, "Failed to marshal question", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(questionJSON)
+	if err != nil {
+		h.logger.Error("Failed to write response", zap.Error(err))
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
+}

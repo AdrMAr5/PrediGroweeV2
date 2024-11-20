@@ -29,7 +29,7 @@ func (c *StatsClient) SaveResponse(sessionID int, answer models.QuestionAnswer) 
 		c.logger.Error("failed to marshal request body", zap.Error(err))
 		return err
 	}
-	req, err := http.NewRequest("POST", c.addr+"/"+strconv.Itoa(sessionID)+"/saveResponse", bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", c.addr+"/sessions/"+strconv.Itoa(sessionID)+"/respond", bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		c.logger.Error("failed to create request", zap.Error(err))
 		return err
@@ -55,7 +55,7 @@ func (c *StatsClient) SaveSession(session models.QuizSession) error {
 		c.logger.Error("failed to marshal request body", zap.Error(err))
 		return err
 	}
-	req, err := http.NewRequest("POST", c.addr+"/saveSession", bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", c.addr+"/sessions/save", bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		c.logger.Error("failed to create request", zap.Error(err))
 		return err
@@ -76,7 +76,7 @@ func (c *StatsClient) SaveSession(session models.QuizSession) error {
 	return nil
 }
 func (c *StatsClient) FinishSession(sessionID int) error {
-	req, err := http.NewRequest("POST", c.addr+"/"+strconv.Itoa(sessionID)+"/finish", nil)
+	req, err := http.NewRequest("POST", c.addr+"/sessions"+strconv.Itoa(sessionID)+"/finish", nil)
 	if err != nil {
 		c.logger.Error("failed to create request", zap.Error(err))
 		return err

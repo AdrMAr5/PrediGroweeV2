@@ -48,7 +48,7 @@ func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		stats.TotalQuestions[mode] = correct + wrong
 		stats.CorrectAnswers[mode] = correct
 		if stats.TotalQuestions[mode] != 0 {
-			stats.Accuracy[mode] = float64(correct) / float64(wrong)
+			stats.Accuracy[mode] = float64(correct) / float64(correct+wrong)
 		} else {
 			stats.Accuracy[mode] = 0
 		}

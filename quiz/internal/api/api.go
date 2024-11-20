@@ -76,27 +76,28 @@ func (a *ApiServer) Run() {
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	a.logger.Info("registering routes")
-
+	//
 	// user actions, external api
 	mux.HandleFunc("GET /quiz/sessions", middleware.VerifyToken(handlers.NewGetUserActiveSessionsHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
-	mux.HandleFunc("GET /quiz/{quizSessionId}/nextQuestion", middleware.VerifyToken(handlers.NewGetNextQuestionHandler(a.storage, a.logger).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
-	mux.HandleFunc("POST /quiz/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/sessions/new", middleware.VerifyToken(handlers.NewStartQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
+	mux.HandleFunc("GET /quiz/sessions/{quizSessionId}/nextQuestion", middleware.VerifyToken(handlers.NewGetNextQuestionHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/sessions/{quizSessionId}/answer", middleware.VerifyToken(handlers.NewSubmitAnswerHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
+	mux.HandleFunc("POST /quiz/sessions/{quizSessionId}/finish", middleware.VerifyToken(handlers.NewFinishQuizHandler(a.storage, a.logger, a.statsClient).Handle, a.authClient))
 
-	// internal api
+	//// internal api
 	apiKey := os.Getenv("INTERNAL_API_KEY")
-	// Case routes
-	caseHandler := handlers.NewCaseHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /quiz/cases", middleware.InternalAuth(caseHandler.GetAllCases, a.logger, apiKey))
-	//todo: fix, idk why tf this is not working but it is not
-	//mux.HandleFunc("GET /quiz/cases/{id}", middleware.VerifyToken(middleware.InternalAuth(caseHandler.GetCaseByID), a.authClient))
-	mux.HandleFunc("POST /quiz/cases", middleware.InternalAuth(caseHandler.CreateCase, a.logger, apiKey))
-	mux.HandleFunc("PUT /quiz/cases/{id}", middleware.InternalAuth(caseHandler.UpdateCase, a.logger, apiKey))
-	mux.HandleFunc("DELETE /quiz/cases/{id}", middleware.InternalAuth(caseHandler.DeleteCase, a.logger, apiKey))
+	//// Case routes
+	//caseHandler := handlers.NewCaseHandler(a.storage, a.logger)
+	//mux.HandleFunc("GET /quiz/cases", middleware.InternalAuth(caseHandler.GetAllCases, a.logger, apiKey))
+	////todo: fix, idk why tf this is not working but it is not
+	////mux.HandleFunc("GET /quiz/cases/{id}", middleware.VerifyToken(middleware.InternalAuth(caseHandler.GetCaseByID), a.authClient))
+	//mux.HandleFunc("POST /quiz/cases", middleware.InternalAuth(caseHandler.CreateCase, a.logger, apiKey))
+	//mux.HandleFunc("PUT /quiz/cases/{id}", middleware.InternalAuth(caseHandler.UpdateCase, a.logger, apiKey))
+	//mux.HandleFunc("DELETE /quiz/cases/{id}", middleware.InternalAuth(caseHandler.DeleteCase, a.logger, apiKey))
 	// Question routes
 	questionHandler := handlers.NewQuestionHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /quiz/{id}", middleware.VerifyToken(questionHandler.GetQuestion, a.authClient))
+	mux.HandleFunc("GET /quiz/q/{id}", middleware.VerifyToken(questionHandler.GetQuestion, a.authClient))
+	mux.HandleFunc("GET /quiz/questions/{id}", middleware.InternalAuth(questionHandler.GetQuestion, a.logger, apiKey))
 	mux.HandleFunc("POST /quiz/questions", middleware.InternalAuth(questionHandler.CreateQuestion, a.logger, apiKey))
 	mux.HandleFunc("PUT /quiz/questions/{id}", middleware.InternalAuth(questionHandler.UpdateQuestion, a.logger, apiKey))
 	mux.HandleFunc("DELETE /quiz/questions/{id}", middleware.InternalAuth(questionHandler.DeleteQuestion, a.logger, apiKey))
@@ -106,11 +107,11 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	optionsHandler := handlers.NewOptionsHandler(a.storage, a.logger)
 	mux.HandleFunc("GET /quiz/options", middleware.InternalAuth(optionsHandler.GetAllOptions, a.logger, apiKey))
 	// Group routes
-	//groupHandler := handlers.NewGroupHandler(a.storage, a.logger)
-	//mux.HandleFunc("POST /quiz/groups", middleware.InternalAuth(groupHandler.CreateGroup, a.logger, apiKey))
-	//mux.HandleFunc("PUT /quiz/groups/{id}", middleware.InternalAuth(groupHandler.UpdateGroup, a.logger, apiKey))
-	//mux.HandleFunc("DELETE /quiz/groups/{id}", middleware.InternalAuth(groupHandler.DeleteGroup, a.logger, apiKey))
-	//mux.HandleFunc("GET /quiz/groups", middleware.InternalAuth(groupHandler.GetAllGroups, a.logger, apiKey))
+	groupHandler := handlers.NewGroupHandler(a.storage, a.logger)
+	mux.HandleFunc("POST /quiz/groups", middleware.InternalAuth(groupHandler.CreateGroup, a.logger, apiKey))
+	mux.HandleFunc("PUT /quiz/groups/{id}", middleware.InternalAuth(groupHandler.UpdateGroup, a.logger, apiKey))
+	mux.HandleFunc("DELETE /quiz/groups/{id}", middleware.InternalAuth(groupHandler.DeleteGroup, a.logger, apiKey))
+	mux.HandleFunc("GET /quiz/groups", middleware.InternalAuth(groupHandler.GetAllGroups, a.logger, apiKey))
 
 	// Parameter routes
 	parameterHandler := handlers.NewParameterHandler(a.storage, a.logger)
