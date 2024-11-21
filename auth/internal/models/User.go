@@ -22,6 +22,7 @@ type User struct {
 	Password  string   `json:"password,omitempty"`
 	Role      UserRole `json:"role"`
 	CreatedAt string   `json:"created_at"`
+	Verified  bool     `json:"verified"`
 }
 
 func (u *User) Validate() error {

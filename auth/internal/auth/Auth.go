@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jordan-wright/email"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
 	"time"
@@ -24,7 +26,7 @@ func ValidateJWT(tokenString string) (token *jwt.Token, err error) {
 func GenerateAccessToken(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(15 * time.Hour).Unix(),
+		"exp": time.Now().Add(10 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
@@ -74,5 +76,34 @@ func SetCookie(w http.ResponseWriter, name, value string) {
 		Value:    value,
 		HttpOnly: true,
 		Secure:   isProd,
+		SameSite: http.SameSiteStrictMode,
 	})
+}
+
+func SendVerificationEmail(to, token string) error {
+	e := email.NewEmail()
+	e.From = "PrediGrowee <noreply@predigrowee.agh.edu.pl>"
+	e.To = []string{to}
+	e.Subject = "Verify your email"
+	e.HTML = []byte(fmt.Sprintf(`
+        <h1>Verify your email</h1>
+        <p>Click <a href="https://predigrowee.agh.edu.pl/api/auth/verify-email?token=%s">here</a> to verify your email.</p>
+    `, token))
+
+	// For Gmail:
+	return e.Send("smtp.gmail.com:587", smtp.PlainAuth(
+		"",
+		os.Getenv("GMAIL_USER"),
+		os.Getenv("GMAIL_PASSWORD"),
+		"smtp.gmail.com",
+	))
+
+}
+
+func GenerateVerificationToken(id string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": id,
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+	})
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }

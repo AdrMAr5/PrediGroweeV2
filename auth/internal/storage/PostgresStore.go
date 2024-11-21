@@ -58,7 +58,7 @@ func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id, verified FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID, &user.Verified)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd, role, google_id FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Role, &user.GoogleID)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd, role, google_id, verified FROM users WHERE email = $1", email).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Role, &user.GoogleID, &user.Verified)
 	if err != nil {
 		return nil, err
 	}
@@ -120,10 +120,10 @@ func (p *PostgresStorage) GetAllUsers() ([]models.User, error) {
 func (p *PostgresStorage) UpdateUser(user *models.User) error {
 	query := `
         UPDATE users 
-        SET first_name = $1, last_name = $2, email = $3, role = $4, pwd = $5, google_id = $6, updated_at = NOW()
-        WHERE id = $7
+        SET first_name = $1, last_name = $2, email = $3, role = $4, pwd = $5, google_id = $6, verified=$7, updated_at = NOW()
+        WHERE id = $8
     `
-	_, err := p.db.Exec(query, user.FirstName, user.LastName, user.Email, user.Role, user.Password, user.GoogleID, user.ID)
+	_, err := p.db.Exec(query, user.FirstName, user.LastName, user.Email, user.Role, user.Password, user.GoogleID, user.Verified, user.ID)
 	if err != nil {
 		return fmt.Errorf("error updating user: %w", err)
 	}

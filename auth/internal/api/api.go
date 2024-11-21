@@ -72,7 +72,7 @@ func (a *ApiServer) Run() {
 func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	// external
 	router.HandleFunc("GET /auth/health", a.HealthCheckHandler)
-	router.HandleFunc("POST /auth/register", handlers.NewRegisterHandler(a.storage, a.logger).Handle)
+	router.HandleFunc("POST /auth/register", handlers.NewRegisterHandler(a.storage, a.logger).Register)
 	router.HandleFunc("POST /auth/login", handlers.NewLoginHandler(a.storage, a.logger).Handle)
 	router.HandleFunc("POST /auth/login/google", handlers.NewOauthLoginHandler(a.storage, a.logger).HandleGoogle)
 	router.HandleFunc("GET /auth/user", middleware.ValidateAccessToken(handlers.NewGetUserHandler(a.storage, a.logger).Handle, a.storage))
@@ -81,6 +81,8 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /auth/verifySession", middleware.ValidateSession(handlers.NewVerifySessionHandler(a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
+
+	router.HandleFunc("POST /auth/verify-email", handlers.NewRegisterHandler(a.storage, a.logger).Verify)
 
 	// internal
 	internalApiKey := os.Getenv("INTERNAL_API_KEY")
