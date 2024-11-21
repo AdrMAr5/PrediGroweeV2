@@ -36,6 +36,10 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
+	if !dbUser.Verified {
+		http.Error(w, "User not verified", http.StatusUnauthorized)
+		return
+	}
 	//userSession, err := h.store.GetUserSession(dbUser.ID)
 	//if err == nil {
 	//	if userSession.Expiration.After(time.Now()) {
@@ -65,13 +69,7 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Path:     "/",
-		Name:     "session_id",
-		Value:    sessionId,
-		HttpOnly: true,
-		Secure:   false, // Set to true if using HTTPS
-	})
+	auth.SetCookie(w, "session_id", sessionId)
 	w.Header().Set("Content-Type", "application/json")
 	data := map[string]interface{}{"user_id": dbUser.ID, "role": dbUser.Role, "access_token": accessToken}
 	err = json.NewEncoder(w).Encode(data)
