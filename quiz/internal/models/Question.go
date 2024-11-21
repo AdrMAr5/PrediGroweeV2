@@ -28,6 +28,7 @@ type QuestionPayload struct {
 	Answers       []string `json:"answers"`
 	PredictionAge int      `json:"prediction_age"`
 	CaseID        int      `json:"case_id"`
+	Group         int      `json:"group"`
 }
 
 func (q *QuestionPayload) ToJSON(w io.Writer) error {

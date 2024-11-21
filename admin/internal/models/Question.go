@@ -36,6 +36,7 @@ type ParameterValue struct {
 }
 
 type Option struct {
-	ID     int    `json:"id"`
-	Option string `json:"option"`
+	ID        int    `json:"id"`
+	Option    string `json:"option"`
+	Questions *int   `json:"questions,omitempty"`
 }

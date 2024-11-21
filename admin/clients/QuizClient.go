@@ -15,6 +15,12 @@ type QuizClient interface {
 	UpdateParameter(id string, parameter models.Parameter) error
 	GetAllOptions() ([]models.Option, error)
 	GetQuestion(id string) (models.Question, error)
+	UpdateQuestion(id string, question models.Question) error
+	CreateParameter(parameter models.Parameter) (models.Parameter, error)
+	UpdateOption(id string, option models.Option) error
+	CreateOption(option models.Option) (models.Option, error)
+	DeleteOption(id string) error
+	GetSummary() (models.QuizSummary, error)
 }
 
 type QuizRestClient struct {
@@ -137,4 +143,120 @@ func (c *QuizRestClient) GetAllOptions() ([]models.Option, error) {
 	var options []models.Option
 	err = json.NewDecoder(resp.Body).Decode(&options)
 	return options, err
+}
+
+func (c *QuizRestClient) UpdateQuestion(id string, question models.Question) error {
+	req, err := c.NewRequestWithAuth("PATCH", fmt.Sprintf("/questions/%s", id), question)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *QuizRestClient) CreateParameter(parameter models.Parameter) (models.Parameter, error) {
+	req, err := c.NewRequestWithAuth("POST", "/parameters", parameter)
+	if err != nil {
+		return models.Parameter{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.Parameter{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	var createdParameter models.Parameter
+	err = json.NewDecoder(resp.Body).Decode(&createdParameter)
+	if err != nil {
+		return models.Parameter{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		return models.Parameter{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return createdParameter, nil
+}
+
+func (c *QuizRestClient) UpdateOption(id string, option models.Option) error {
+	req, err := c.NewRequestWithAuth("PATCH", fmt.Sprintf("/options/%s", id), option)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *QuizRestClient) CreateOption(option models.Option) (models.Option, error) {
+	req, err := c.NewRequestWithAuth("POST", "/options", option)
+	if err != nil {
+		return models.Option{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.Option{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	var createdOption models.Option
+	err = json.NewDecoder(resp.Body).Decode(&createdOption)
+	if err != nil {
+		return models.Option{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		return models.Option{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return createdOption, nil
+}
+
+func (c *QuizRestClient) DeleteOption(id string) error {
+	req, err := c.NewRequestWithAuth("DELETE", fmt.Sprintf("/options/%s", id), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func (c *QuizRestClient) GetSummary() (models.QuizSummary, error) {
+	req, err := c.NewRequestWithAuth("GET", "/summary", nil)
+	if err != nil {
+		return models.QuizSummary{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return models.QuizSummary{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return models.QuizSummary{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var summary models.QuizSummary
+	err = json.NewDecoder(resp.Body).Decode(&summary)
+	return summary, err
 }

@@ -14,6 +14,8 @@ type StatsClient interface {
 	GetAllResponses() ([]models.QuestionResponse, error)
 	GetStatsForQuestion(id string) (models.QuestionStats, error)
 	GetStatsForAllQuestions() ([]models.QuestionStats, error)
+	GetActivityStats() ([]models.ActivityStats, error)
+	GetSummary() (models.StatsSummary, error)
 }
 
 type StatsRestClient struct {
@@ -136,4 +138,45 @@ func (c *StatsRestClient) GetStatsForAllQuestions() ([]models.QuestionStats, err
 		return []models.QuestionStats{}, fmt.Errorf("failed to decode response body: %w", err)
 	}
 	return stats, nil
+}
+
+func (c *StatsRestClient) GetActivityStats() ([]models.ActivityStats, error) {
+	req, err := c.NewRequestWithAuth("GET", "/activity", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return []models.ActivityStats{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var stats []models.ActivityStats
+	err = json.NewDecoder(resp.Body).Decode(&stats)
+	if err != nil {
+		return []models.ActivityStats{}, fmt.Errorf("failed to decode response body: %w", err)
+	}
+	return stats, nil
+}
+func (c *StatsRestClient) GetSummary() (models.StatsSummary, error) {
+	req, err := c.NewRequestWithAuth("GET", "/summary", nil)
+	if err != nil {
+		return models.StatsSummary{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return models.StatsSummary{}, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return models.StatsSummary{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var summary models.StatsSummary
+	err = json.NewDecoder(resp.Body).Decode(&summary)
+	if err != nil {
+		return models.StatsSummary{}, fmt.Errorf("failed to decode response body: %w", err)
+	}
+	return summary, nil
 }

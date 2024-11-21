@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
+	"stats/internal/models"
 	"stats/internal/storage"
 	"strconv"
 )
@@ -73,4 +74,53 @@ func (h *GetAllStatsHandler) GetStatsForQuestion(w http.ResponseWriter, r *http.
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *GetAllStatsHandler) GetActivity(w http.ResponseWriter, r *http.Request) {
+	stats, err := h.storage.GetActivityStats()
+	if err != nil {
+		h.logger.Error("failed to get stats", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	statsJson, _ := json.Marshal(stats)
+	_, err = w.Write(statsJson)
+	if err != nil {
+		h.logger.Error("failed to write response", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *GetAllStatsHandler) GetSummary(w http.ResponseWriter, r *http.Request) {
+	var summary models.StatsSummary
+	var err error
+	summary.QuizSessions, err = h.storage.CountQuizSessions()
+	if err != nil {
+		h.logger.Error("failed to count quiz sessions", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	summary.TotalResponses, err = h.storage.CountAnswers()
+	if err != nil {
+		h.logger.Error("failed to count answers", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	summary.TotalCorrect, err = h.storage.CountCorrectAnswers()
+	if err != nil {
+		h.logger.Error("failed to count correct answers", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(summary)
+	if err != nil {
+		h.logger.Error("failed to encode response", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

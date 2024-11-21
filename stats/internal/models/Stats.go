@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"io"
+	"time"
 )
 
 type QuizMode = string
@@ -44,4 +45,10 @@ type QuestionAllStats struct {
 	QuestionID int `json:"question_id"`
 	Total      int `json:"total"`
 	Correct    int `json:"correct"`
+}
+
+type ActivityStats struct {
+	Date    time.Time `json:"date"`
+	Total   int       `json:"total"`
+	Correct int       `json:"correct"`
 }

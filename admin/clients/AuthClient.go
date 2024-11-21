@@ -15,6 +15,7 @@ type AuthClient interface {
 	UpdateUser(user models.UserPayload) error
 	GetUser(id string) (models.User, error)
 	DeleteUser(id string) error
+	GetSummary() (models.AuthSummary, error)
 }
 
 type RestAuthClient struct {
@@ -172,4 +173,29 @@ func (c *RestAuthClient) DeleteUser(id string) error {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 	return nil
+}
+func (c *RestAuthClient) GetSummary() (models.AuthSummary, error) {
+	req, err := c.NewRequestWithAuth("GET", "/summary", nil)
+	if err != nil {
+		c.logger.Error("failed to create request", zap.Error(err))
+		return models.AuthSummary{}, err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.logger.Error("failed to send request", zap.Error(err))
+		return models.AuthSummary{}, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		c.logger.Error("unexpected status code", zap.Error(err), zap.Int("status_code", resp.StatusCode))
+		return models.AuthSummary{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var summary models.AuthSummary
+	err = json.NewDecoder(resp.Body).Decode(&summary)
+	if err != nil {
+		c.logger.Error("failed to decode response", zap.Error(err))
+		return models.AuthSummary{}, err
+	}
+	return summary, nil
 }

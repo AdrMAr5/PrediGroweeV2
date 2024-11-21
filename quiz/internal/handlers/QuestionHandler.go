@@ -52,20 +52,25 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Invalid question ID", http.StatusBadRequest)
 		return
 	}
-	var questionPayload models.QuestionPayload
+	var questionPayload models.Question
 	if err := questionPayload.FromJSON(r.Body); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	updatedQuestion, err := h.storage.UpdateQuestionByID(questionID, questionPayload)
-	if err != nil {
-		h.logger.Error("Failed to update question", zap.Error(err))
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	questionToUpdate := models.QuestionPayload{
+		Question:      questionPayload.Question,
+		Answers:       questionPayload.Options,
+		CaseID:        questionPayload.Case.ID,
+		PredictionAge: questionPayload.PredictionAge,
+		Group:         questionPayload.Group,
+	}
+	_, err = h.storage.UpdateQuestionByID(questionID, questionToUpdate)
+	casePayload := questionPayload.Case
+	if err := h.storage.UpdateCaseParameters(casePayload.ID, casePayload.Parameters, casePayload.ParameterValues); err != nil {
+		http.Error(w, "Failed to update case parameters", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	err = updatedQuestion.ToJSON(w)
-	w.WriteHeader(http.StatusOK)
+
 }
 func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 	questionID, err := strconv.Atoi(r.PathValue("id"))
