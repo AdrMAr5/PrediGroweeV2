@@ -8,6 +8,9 @@ type QuestionResponse struct {
 	IsCorrect  bool       `json:"is_correct"`
 	Time       *time.Time `json:"time,omitempty"`
 	UserID     *int       `json:"user_id,omitempty"`
+	ScreenSize string     `json:"screen_size"`
+	TimeSpent  int        `json:"time_spent"`
+	CaseCode   string     `json:"case_code"`
 }
 
 type QuestionStats struct {

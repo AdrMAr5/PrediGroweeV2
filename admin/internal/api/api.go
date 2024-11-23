@@ -4,7 +4,6 @@ import (
 	"admin/clients"
 	"admin/internal/handlers"
 	"admin/internal/middleware"
-	"admin/internal/storage"
 	"context"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
@@ -17,17 +16,15 @@ import (
 
 type ApiServer struct {
 	addr        string
-	storage     storage.Storage
 	logger      *zap.Logger
 	authClient  clients.AuthClient
 	statsClient clients.StatsClient
 	quizClient  clients.QuizClient
 }
 
-func NewApiServer(addr string, store storage.Storage, logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient, quizClient clients.QuizClient) *ApiServer {
+func NewApiServer(addr string, logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient, quizClient clients.QuizClient) *ApiServer {
 	return &ApiServer{
 		addr:        addr,
-		storage:     store,
 		logger:      logger,
 		authClient:  authClient,
 		statsClient: statsClient,
@@ -75,14 +72,15 @@ func (a *ApiServer) Run() {
 
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	// users
-	usersHandler := handlers.NewUsersHandler(a.storage, a.logger, a.authClient, a.statsClient)
+	usersHandler := handlers.NewUsersHandler(a.logger, a.authClient, a.statsClient)
 	mux.HandleFunc("GET /admin/users", middleware.VerifyAdmin(usersHandler.GetUsers, a.authClient))
 	mux.HandleFunc("GET /admin/users/{id}", middleware.VerifyAdmin(usersHandler.GetUserDetails, a.authClient))
 	mux.HandleFunc("PATCH /admin/users/{id}", middleware.VerifyAdmin(usersHandler.UpdateUser, a.authClient))
 	mux.HandleFunc("DELETE /admin/users/{id}", middleware.VerifyAdmin(usersHandler.DeleteUser, a.authClient))
+	mux.HandleFunc("GET /admin/users/-/surveys", middleware.VerifyAdmin(usersHandler.GetAllUsersSurveys, a.authClient))
 
 	// quiz
-	quizHandler := handlers.NewQuizHandler(a.storage, a.logger, a.quizClient, a.statsClient)
+	quizHandler := handlers.NewQuizHandler(a.logger, a.quizClient, a.statsClient)
 	mux.HandleFunc("GET /admin/questions", middleware.VerifyAdmin(quizHandler.GetAllQuestions, a.authClient))
 	mux.HandleFunc("GET /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.GetQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/parameters", middleware.VerifyAdmin(quizHandler.GetAllParameters, a.authClient))
@@ -95,11 +93,11 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.UpdateQuestion, a.authClient))
 
 	// stats
-	statsHandler := handlers.NewAllStatsHandler(a.storage, a.logger, a.statsClient)
+	statsHandler := handlers.NewAllStatsHandler(a.logger, a.statsClient)
 	mux.HandleFunc("GET /admin/responses", middleware.VerifyAdmin(statsHandler.GetAllResponses, a.authClient))
 	mux.HandleFunc("GET /admin/stats/questions/{questionId}", middleware.VerifyAdmin(statsHandler.GetStatsForQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/stats/questions", middleware.VerifyAdmin(statsHandler.GetStatsForAllQuestions, a.authClient))
 	mux.HandleFunc("GET /admin/stats/activity", middleware.VerifyAdmin(statsHandler.GetActivityStats, a.authClient))
 
-	mux.HandleFunc("GET /admin/dashboard", middleware.VerifyAdmin(handlers.NewSummaryHandler(a.storage, a.logger, a.authClient, a.statsClient, a.quizClient).GetSummary, a.authClient))
+	mux.HandleFunc("GET /admin/dashboard", middleware.VerifyAdmin(handlers.NewSummaryHandler(a.logger, a.authClient, a.statsClient, a.quizClient).GetSummary, a.authClient))
 }

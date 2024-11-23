@@ -99,7 +99,7 @@ func (s *PostgresStorage) CreateQuizSession(session models.QuizSession) (models.
 func (s *PostgresStorage) GetQuizSessionByID(id int) (models.QuizSession, error) {
 	var session models.QuizSession
 	query := `
-        SELECT id, user_id, status, mode, current_question, current_group, group_order, created_at, updated_at, finished_at
+        SELECT id, user_id, status, mode, current_question, current_group, group_order, created_at, updated_at, finished_at, question_requested_time
         FROM quiz_sessions
         WHERE id = $1`
 
@@ -115,6 +115,7 @@ func (s *PostgresStorage) GetQuizSessionByID(id int) (models.QuizSession, error)
 		&session.CreatedAt,
 		&session.UpdatedAt,
 		&session.FinishedAt,
+		&session.QuestionRequestedTime,
 	)
 	session.GroupOrder = make([]int, 0, len(intermediateArray))
 	for _, nullInt := range intermediateArray {
@@ -135,7 +136,8 @@ func (s *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
             current_group = $4, 
             group_order = $5, 
             updated_at = NOW(), 
-            finished_at = $6
+            finished_at = $6,
+        question_requested_time = $8
         WHERE id = $7`
 
 	_, err := s.db.Exec(
@@ -147,6 +149,7 @@ func (s *PostgresStorage) UpdateQuizSession(session models.QuizSession) error {
 		pq.Array(session.GroupOrder),
 		session.FinishedAt,
 		session.ID,
+		session.QuestionRequestedTime,
 	)
 
 	return err

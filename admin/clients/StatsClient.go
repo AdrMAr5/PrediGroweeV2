@@ -16,6 +16,8 @@ type StatsClient interface {
 	GetStatsForAllQuestions() ([]models.QuestionStats, error)
 	GetActivityStats() ([]models.ActivityStats, error)
 	GetSummary() (models.StatsSummary, error)
+	GetSurvey(id string) (models.SurveyResponse, error)
+	GetAllSurveys() ([]models.SurveyResponse, error)
 }
 
 type StatsRestClient struct {
@@ -179,4 +181,45 @@ func (c *StatsRestClient) GetSummary() (models.StatsSummary, error) {
 		return models.StatsSummary{}, fmt.Errorf("failed to decode response body: %w", err)
 	}
 	return summary, nil
+}
+
+func (c *StatsRestClient) GetSurvey(id string) (models.SurveyResponse, error) {
+	req, err := c.NewRequestWithAuth("GET", fmt.Sprintf("/surveys/users/%s", id), nil)
+	if err != nil {
+		return models.SurveyResponse{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return models.SurveyResponse{}, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return models.SurveyResponse{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var survey models.SurveyResponse
+	err = json.NewDecoder(resp.Body).Decode(&survey)
+	if err != nil {
+		return models.SurveyResponse{}, fmt.Errorf("failed to decode response body: %w", err)
+	}
+	return survey, nil
+}
+func (c *StatsRestClient) GetAllSurveys() ([]models.SurveyResponse, error) {
+	req, err := c.NewRequestWithAuth("GET", "/surveys/users/-", nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return []models.SurveyResponse{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var surveys []models.SurveyResponse
+	err = json.NewDecoder(resp.Body).Decode(&surveys)
+	if err != nil {
+		return []models.SurveyResponse{}, fmt.Errorf("failed to decode response body: %w", err)
+	}
+	return surveys, nil
 }

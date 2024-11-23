@@ -12,19 +12,19 @@ import (
 	"net/http"
 )
 
-type GetImageHandler struct {
+type QuestionImagesHandler struct {
 	logger *zap.Logger
 	db     *sql.DB
 }
 
-func NewGetImageHandler(logger *zap.Logger, db *sql.DB) *GetImageHandler {
-	return &GetImageHandler{
+func NewQuestionImagesHandler(logger *zap.Logger, db *sql.DB) *QuestionImagesHandler {
+	return &QuestionImagesHandler{
 		logger: logger,
 		db:     db,
 	}
 }
 
-func (h *GetImageHandler) Handle(rw http.ResponseWriter, r *http.Request) {
+func (h *QuestionImagesHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	questionId := r.PathValue("questionId")
 	h.logger.Info("Getting image for question id: " + questionId)
 	questionID, err := strconv.Atoi(questionId)

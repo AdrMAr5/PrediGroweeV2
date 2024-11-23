@@ -59,7 +59,7 @@ func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
 
 func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id, verified FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID, &user.Verified)
+	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id, verified, created_at FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID, &user.Verified, &user.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

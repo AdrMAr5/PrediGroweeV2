@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"quiz/internal/storage"
 	"strconv"
+	"time"
 )
 
 type GetNextQuestionHandler struct {
@@ -54,6 +55,11 @@ func (h *GetNextQuestionHandler) Handle(rw http.ResponseWriter, r *http.Request)
 	// reset the value3 field to 0 not to expose the parameters of correct answer
 	for i := range question.Case.ParameterValues {
 		question.Case.ParameterValues[i].Value3 = nil
+	}
+	session.QuestionRequestedTime = time.Now()
+	err = h.storage.UpdateQuizSession(session)
+	if err != nil {
+		h.logger.Error("failed to update session, will result in wrong answer time", zap.Error(err))
 	}
 	err = question.ToJSON(rw)
 	if err != nil {

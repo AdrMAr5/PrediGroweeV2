@@ -2,21 +2,18 @@ package handlers
 
 import (
 	"admin/clients"
-	"admin/internal/storage"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type AllStatsHandler struct {
-	storage     storage.Storage
 	logger      *zap.Logger
 	statsClient clients.StatsClient
 }
 
-func NewAllStatsHandler(storage storage.Storage, logger *zap.Logger, statsClient clients.StatsClient) *AllStatsHandler {
+func NewAllStatsHandler(logger *zap.Logger, statsClient clients.StatsClient) *AllStatsHandler {
 	return &AllStatsHandler{
-		storage:     storage,
 		logger:      logger,
 		statsClient: statsClient,
 	}

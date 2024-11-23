@@ -31,6 +31,7 @@ type UserStats struct {
 }
 
 type UserDetails struct {
-	User  User      `json:"user"`
-	Stats UserStats `json:"stats"`
+	User            User           `json:"user"`
+	Stats           UserStats      `json:"stats"`
+	SurveyResponses SurveyResponse `json:"survey"`
 }

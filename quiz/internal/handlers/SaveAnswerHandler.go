@@ -9,6 +9,7 @@ import (
 	"quiz/internal/models"
 	"quiz/internal/storage"
 	"strconv"
+	"time"
 )
 
 type SubmitAnswerHandler struct {
@@ -44,6 +45,8 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
+	timeSpend := time.Now().Sub(session.QuestionRequestedTime)
+
 	userID := r.Context().Value("user_id").(int)
 	if userID != session.UserID {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
@@ -83,11 +86,19 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "invalid answer", http.StatusBadRequest)
 		return
 	}
-
+	question, err := h.storage.GetQuestionByID(session.CurrentQuestionID)
+	if err != nil {
+		h.logger.Error("failed to get question by id", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
 	err = h.statsClient.SaveResponse(session.ID, models.QuestionAnswer{
 		QuestionID: session.CurrentQuestionID,
 		Answer:     answer.Answer,
 		IsCorrect:  answer.Answer == correct,
+		ScreenSize: answer.ScreenSize,
+		TimeSpent:  int(timeSpend.Seconds()),
+		CaseCode:   question.Case.Code,
 	})
 	if err != nil {
 		h.logger.Error("failed to save response", zap.Error(err))

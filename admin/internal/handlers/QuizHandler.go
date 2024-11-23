@@ -3,22 +3,19 @@ package handlers
 import (
 	"admin/clients"
 	"admin/internal/models"
-	"admin/internal/storage"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type QuizHandler struct {
-	storage     storage.Storage
 	logger      *zap.Logger
 	quizClient  clients.QuizClient
 	statsClient clients.StatsClient
 }
 
-func NewQuizHandler(storage storage.Storage, logger *zap.Logger, quizClient clients.QuizClient, statsClient clients.StatsClient) *QuizHandler {
+func NewQuizHandler(logger *zap.Logger, quizClient clients.QuizClient, statsClient clients.StatsClient) *QuizHandler {
 	return &QuizHandler{
-		storage:     storage,
 		logger:      logger,
 		quizClient:  quizClient,
 		statsClient: statsClient,

@@ -3,7 +3,6 @@ package handlers
 import (
 	"admin/clients"
 	"admin/internal/models"
-	"admin/internal/storage"
 	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
@@ -12,16 +11,14 @@ import (
 )
 
 type SummaryHandler struct {
-	storage     storage.Storage
 	logger      *zap.Logger
 	authClient  clients.AuthClient
 	statsClient clients.StatsClient
 	quizClient  clients.QuizClient
 }
 
-func NewSummaryHandler(storage storage.Storage, logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient, quizClient clients.QuizClient) *SummaryHandler {
+func NewSummaryHandler(logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient, quizClient clients.QuizClient) *SummaryHandler {
 	return &SummaryHandler{
-		storage:     storage,
 		logger:      logger,
 		authClient:  authClient,
 		statsClient: statsClient,

@@ -42,4 +42,7 @@ type QuestionAnswer struct {
 	QuestionID int    `json:"question_id"`
 	Answer     string `json:"answer"`
 	IsCorrect  bool   `json:"is_correct"`
+	ScreenSize string `json:"screen_size"`
+	TimeSpent  int    `json:"time_spent"`
+	CaseCode   string `json:"case_code"`
 }

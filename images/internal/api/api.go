@@ -70,5 +70,9 @@ func (a *ApiServer) Run() {
 
 }
 func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /images/{questionId}/image/{id}", middleware.VerifyToken(NewGetImageHandler(a.logger, a.db).Handle, a.authClient))
+	mux.HandleFunc("GET /images/questions/{questionId}/image/{id}", middleware.VerifyToken(NewQuestionImagesHandler(a.logger, a.db).Handle, a.authClient))
+
+	paramImagesHandler := NewParamImagesHandler(a.logger, a.db)
+	mux.HandleFunc("GET /images/params/{id}", middleware.VerifyToken(paramImagesHandler.GetImage, a.authClient))
+	mux.HandleFunc("POST /images/params/{id}", middleware.VerifyToken(paramImagesHandler.PostImage, a.authClient))
 }

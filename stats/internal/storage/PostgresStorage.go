@@ -21,6 +21,7 @@ type Storage interface {
 	// survey
 	SaveSurveyResponse(response *models.SurveyResponse) error
 	GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error)
+	GetAllSurveyResponses() ([]models.SurveyResponse, error)
 
 	// stats
 	GetAllResponses() ([]models.QuestionResponse, error)
@@ -55,7 +56,7 @@ func (p *PostgresStorage) Close() error {
 	return p.db.Close()
 }
 func (p *PostgresStorage) SaveResponse(sessionID int, response *models.QuestionResponse) error {
-	_, err := p.db.Exec(`INSERT INTO answers (session_id, question_id, answer, correct) values ($1, $2, $3, $4)`, sessionID, response.QuestionID, response.Answer, response.IsCorrect)
+	_, err := p.db.Exec(`INSERT INTO answers (session_id, question_id, answer, correct, screen_size, time_spent, case_code) values ($1, $2, $3, $4, $5, $6, $7)`, sessionID, response.QuestionID, response.Answer, response.IsCorrect, response.ScreenSize, response.TimeSpent, response.CaseCode)
 	if err != nil {
 		return err
 	}
@@ -158,14 +159,66 @@ func (p *PostgresStorage) SaveSurveyResponse(response *models.SurveyResponse) er
 	return nil
 }
 func (p *PostgresStorage) GetSurveyResponseForUser(userID int) (*models.SurveyResponse, error) {
-	query := `SELECT user_id, gender, age, vision_defect, education, experience, country, name, surname FROM users_surveys
-		WHERE user_id = $1`
-	var surveyResponses models.SurveyResponse
-	err := p.db.QueryRow(query, userID).Scan(&surveyResponses.UserID, &surveyResponses.Gender, &surveyResponses.Age, &surveyResponses.VisionDefect, &surveyResponses.Education, &surveyResponses.Experience, &surveyResponses.Country, &surveyResponses.Name, &surveyResponses.Surname)
-	return &surveyResponses, err
+	query := `SELECT user_id, gender, age, vision_defect, education, experience, country, name, surname 
+              FROM users_surveys
+              WHERE user_id = $1`
+	var surveyResponse models.SurveyResponse
+	err := p.db.QueryRow(query, userID).Scan(
+		&surveyResponse.UserID,
+		&surveyResponse.Gender,
+		&surveyResponse.Age,
+		&surveyResponse.VisionDefect,
+		&surveyResponse.Education,
+		&surveyResponse.Experience,
+		&surveyResponse.Country,
+		&surveyResponse.Name,
+		&surveyResponse.Surname,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &surveyResponse, nil
+}
+
+func (p *PostgresStorage) GetAllSurveyResponses() ([]models.SurveyResponse, error) {
+	query := `SELECT user_id, gender, age, vision_defect, education, experience, country, name, surname 
+              FROM users_surveys
+              ORDER BY user_id`
+
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var surveys []models.SurveyResponse
+	for rows.Next() {
+		var survey models.SurveyResponse
+		err := rows.Scan(
+			&survey.UserID,
+			&survey.Gender,
+			&survey.Age,
+			&survey.VisionDefect,
+			&survey.Education,
+			&survey.Experience,
+			&survey.Country,
+			&survey.Name,
+			&survey.Surname,
+		)
+		if err != nil {
+			return nil, err
+		}
+		surveys = append(surveys, survey)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return surveys, nil
 }
 func (p *PostgresStorage) GetAllResponses() ([]models.QuestionResponse, error) {
-	query := `SELECT user_id, question_id, answer, correct, answer_time FROM answers
+	query := `SELECT user_id, question_id, answer, correct, answer_time, answers.screen_size, answers.time_spent, answers.case_code FROM answers
     			join quiz_sessions on answers.session_id = quiz_sessions.session_id
                 order by answer_time desc;`
 	rows, err := p.db.Query(query)
@@ -175,7 +228,7 @@ func (p *PostgresStorage) GetAllResponses() ([]models.QuestionResponse, error) {
 	var stats []models.QuestionResponse
 	for rows.Next() {
 		var stat models.QuestionResponse
-		err = rows.Scan(&stat.UserID, &stat.QuestionID, &stat.Answer, &stat.IsCorrect, &stat.Time)
+		err = rows.Scan(&stat.UserID, &stat.QuestionID, &stat.Answer, &stat.IsCorrect, &stat.Time, &stat.ScreenSize, &stat.TimeSpent, &stat.CaseCode)
 		if err != nil {
 			return nil, err
 		}

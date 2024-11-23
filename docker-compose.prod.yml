@@ -58,17 +58,6 @@ services:
       expose:
           - "5432"
 
-  admin_db:
-      image: postgres:13
-      environment:
-          - POSTGRES_USER=${ADMIN_DB_USER}
-          - POSTGRES_PASSWORD=${ADMIN_DB_PASSWORD}
-          - POSTGRES_DB=admin_db
-      volumes:
-          - admin_db_data:/var/lib/postgresql/data
-      expose:
-          - "5432"
-
   auth:
     build:
       context: ./auth
@@ -151,11 +140,6 @@ services:
     environment:
       - ENV=production
       - SERVICE_NAME=admin
-      - DB_HOST=admin_db
-      - DB_PORT=5432
-      - DB_NAME=admin_db
-      - DB_USER=${ADMIN_DB_USER}
-      - DB_PASSWORD=${ADMIN_DB_PASSWORD}
 
     expose:
       - "8080"
@@ -193,7 +177,6 @@ volumes:
   quiz_db_data:
   stats_db_data:
   images_db_data:
-  admin_db_data:
   images_data:
 
 

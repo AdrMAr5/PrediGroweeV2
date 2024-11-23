@@ -3,22 +3,20 @@ package handlers
 import (
 	"admin/clients"
 	"admin/internal/models"
-	"admin/internal/storage"
 	"encoding/json"
 	"go.uber.org/zap"
 	"net/http"
+	"sync"
 )
 
 type UsersHandler struct {
-	storage     storage.Storage
 	logger      *zap.Logger
 	authClient  clients.AuthClient
 	statsClient clients.StatsClient
 }
 
-func NewUsersHandler(storage storage.Storage, logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient) *UsersHandler {
+func NewUsersHandler(logger *zap.Logger, authClient clients.AuthClient, statsClient clients.StatsClient) *UsersHandler {
 	return &UsersHandler{
-		storage:     storage,
 		logger:      logger,
 		authClient:  authClient,
 		statsClient: statsClient,
@@ -62,19 +60,40 @@ func (u *UsersHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 func (u *UsersHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("id")
-	user, err := u.authClient.GetUser(userID)
-	userStats, err := u.statsClient.GetUserStats(userID)
-	if err != nil {
-		u.logger.Error("failed to get user or user stats", zap.Error(err))
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
 	var userDetails models.UserDetails
-	userDetails.User = user
-	userDetails.Stats = userStats
+	wg := sync.WaitGroup{}
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		user, err := u.authClient.GetUser(userID)
+		if err != nil {
+			u.logger.Error("failed to get user", zap.Error(err))
+			return
+		}
+		userDetails.User = user
+	}()
+	go func() {
+		defer wg.Done()
+		userStats, err := u.statsClient.GetUserStats(userID)
+		if err != nil {
+			u.logger.Error("failed to get user stats", zap.Error(err))
+			return
+		}
+		userDetails.Stats = userStats
+	}()
+	go func() {
+		defer wg.Done()
+		userSurvey, err := u.statsClient.GetSurvey(userID)
+		if err != nil {
+			u.logger.Error("failed to get user survey", zap.Error(err))
+			return
+		}
+		userDetails.SurveyResponses = userSurvey
+	}()
+	wg.Wait()
 	w.Header().Set("Content-Type", "application/json")
 	userDetailsJson, _ := json.Marshal(userDetails)
-	_, err = w.Write(userDetailsJson)
+	_, err := w.Write(userDetailsJson)
 	if err != nil {
 		u.logger.Error("failed to write response", zap.Error(err))
 		return
@@ -90,4 +109,21 @@ func (u *UsersHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (u *UsersHandler) GetAllUsersSurveys(w http.ResponseWriter, _ *http.Request) {
+	surveys, err := u.statsClient.GetAllSurveys()
+	if err != nil {
+		u.logger.Error("failed to get surveys", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	surveysJson, _ := json.Marshal(surveys)
+	_, err = w.Write(surveysJson)
+	if err != nil {
+		u.logger.Error("failed to write response", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 }
