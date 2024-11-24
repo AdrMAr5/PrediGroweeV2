@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"quiz/internal/models"
@@ -23,6 +24,7 @@ type Store interface {
 	GetAllQuestions() ([]models.Question, error)
 	CreateQuestion(newCase models.QuestionPayload) (models.QuestionPayload, error)
 	UpdateQuestionByID(questionID int, updatedCase models.QuestionPayload) (models.QuestionPayload, error)
+	UpdateQuestionCorrectOption(questionID int, option string) error
 	DeleteQuestionByID(id int) error
 	CountQuestions() (int, error)
 	GetQuestionOptions(id int) ([]string, error)
@@ -438,6 +440,38 @@ func (s *PostgresStorage) UpdateQuestionByID(questionID int, payload models.Ques
 
 	payload.ID = questionID
 	return payload, err
+}
+
+func (s *PostgresStorage) UpdateQuestionCorrectOption(questionID int, option string) error {
+	var newCorrectID int
+	err := s.db.QueryRow("SELECT id FROM options WHERE option = $1", option).Scan(&newCorrectID)
+	if err != nil {
+		return err
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Reset all options to false for this question
+	if _, err := tx.Exec(`
+        UPDATE question_options 
+        SET is_correct = false 
+        WHERE question_id = $1`, questionID); err != nil {
+		return fmt.Errorf("reset options: %w", err)
+	}
+
+	// Set new correct option
+	if _, err := tx.Exec(`
+        UPDATE question_options 
+        SET is_correct = true 
+        WHERE question_id = $1 AND option_id = $2`,
+		questionID, newCorrectID); err != nil {
+		return fmt.Errorf("update correct option: %w", err)
+	}
+
+	return tx.Commit()
 }
 
 func (s *PostgresStorage) DeleteQuestionByID(id int) error {

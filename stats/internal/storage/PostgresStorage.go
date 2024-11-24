@@ -31,6 +31,8 @@ type Storage interface {
 	CountQuizSessions() (int, error)
 	CountAnswers() (int, error)
 	CountCorrectAnswers() (int, error)
+	GetUserQuizSessionsStats(userID int) ([]*models.QuizStats, error)
+	GetStatsGroupedBySurveyField(field string) ([]models.SurveyGroupedStats, error)
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -94,6 +96,46 @@ func (p *PostgresStorage) GetUserStatsForMode(userID int, mode models.QuizMode) 
 	}
 	return
 }
+
+func (p *PostgresStorage) GetUserQuizSessionsStats(userID int) ([]*models.QuizStats, error) {
+	query := `
+        SELECT s.session_id, s.quiz_mode, 
+               COUNT(*) as total_questions,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) as correct_answers,
+			   MIN(a.answer_time) as start_time
+        FROM quiz_sessions s
+        JOIN answers a ON s.session_id = a.session_id
+        WHERE s.user_id = $1
+        GROUP BY s.session_id, s.quiz_mode
+        ORDER BY s.session_id DESC`
+
+	rows, err := p.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []*models.QuizStats
+	for rows.Next() {
+		stat := &models.QuizStats{}
+		err = rows.Scan(&stat.SessionID, &stat.Mode, &stat.TotalQuestions, &stat.CorrectAnswers, &stat.StartTime)
+		if err != nil {
+			return nil, err
+		}
+		if stat.TotalQuestions != 0 {
+			stat.Accuracy = float64(stat.CorrectAnswers) / float64(stat.TotalQuestions)
+		}
+
+		stat.Questions, err = p.GetQuizQuestionsStats(stat.SessionID)
+		if err != nil {
+			return nil, err
+		}
+
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
 func (p *PostgresStorage) GetQuizSessionByID(quizSessionID int) (*models.QuizSession, error) {
 	var session models.QuizSession
 	err := p.db.QueryRow(`SELECT user_id, session_id, finish_time, quiz_mode FROM quiz_sessions WHERE session_id = $1`, quizSessionID).Scan(&session.UserID, &session.SessionID, &session.FinishTime, &session.QuizMode)
@@ -319,4 +361,38 @@ func (p *PostgresStorage) CountCorrectAnswers() (int, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (p *PostgresStorage) GetStatsGroupedBySurveyField(field string) ([]models.SurveyGroupedStats, error) {
+	query := fmt.Sprintf(`
+        SELECT 
+            us.%s as group_field,
+            COUNT(a.session_id) as total,
+            SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+        FROM users_surveys us
+        LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+        LEFT JOIN answers a ON qs.session_id = a.session_id
+        WHERE us.%s IS NOT NULL
+        GROUP BY us.%s`, field, field, field)
+
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []models.SurveyGroupedStats
+	for rows.Next() {
+		var s models.SurveyGroupedStats
+		err := rows.Scan(&s.Value, &s.Total, &s.Correct)
+		if err != nil {
+			return nil, err
+		}
+		s.Group = field
+		if s.Total > 0 {
+			s.Accuracy = float64(s.Correct) / float64(s.Total)
+		}
+		stats = append(stats, s)
+	}
+	return stats, nil
 }

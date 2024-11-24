@@ -26,11 +26,13 @@ type QuestionStat struct {
 }
 
 type QuizStats struct {
-	Mode           QuizMode
-	TotalQuestions int
-	CorrectAnswers int
-	Accuracy       float64
-	Questions      []QuestionStat
+	SessionID      int            `json:"session_id"`
+	Mode           QuizMode       `json:"mode"`
+	TotalQuestions int            `json:"total_questions"`
+	CorrectAnswers int            `json:"correct_answers"`
+	Accuracy       float64        `json:"accuracy"`
+	Questions      []QuestionStat `json:"questions"`
+	StartTime      *time.Time     `json:"start_time"`
 }
 
 func (s *QuizStats) ToJSON(w io.Writer) error {
@@ -51,4 +53,11 @@ type ActivityStats struct {
 	Date    time.Time `json:"date"`
 	Total   int       `json:"total"`
 	Correct int       `json:"correct"`
+}
+type SurveyGroupedStats struct {
+	Group    string  `json:"group"`
+	Value    string  `json:"value"`
+	Total    int     `json:"total"`
+	Correct  int     `json:"correct"`
+	Accuracy float64 `json:"accuracy"`
 }

@@ -65,6 +65,19 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 		Group:         questionPayload.Group,
 	}
 	_, err = h.storage.UpdateQuestionByID(questionID, questionToUpdate)
+	if err != nil {
+		h.logger.Error("Failed to update question", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	if questionPayload.Correct != nil {
+		err = h.storage.UpdateQuestionCorrectOption(questionID, *questionPayload.Correct)
+		if err != nil {
+			h.logger.Error("Failed to update question correct option", zap.Error(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 	casePayload := questionPayload.Case
 	if err := h.storage.UpdateCaseParameters(casePayload.ID, casePayload.Parameters, casePayload.ParameterValues); err != nil {
 		http.Error(w, "Failed to update case parameters", http.StatusInternalServerError)

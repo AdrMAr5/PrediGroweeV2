@@ -120,7 +120,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 
 	// Parameter routes
 	parameterHandler := handlers.NewParameterHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /quiz/parameters", middleware.InternalAuth(parameterHandler.GetAllParameters, a.logger, apiKey))
+	mux.HandleFunc("GET /quiz/parameters", parameterHandler.GetAllParameters)
 	mux.HandleFunc("POST /quiz/parameters", middleware.InternalAuth(parameterHandler.CreateParameter, a.logger, apiKey))
 	mux.HandleFunc("PATCH /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.UpdateParameter, a.logger, apiKey))
 	mux.HandleFunc("DELETE /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.DeleteParameter, a.logger, apiKey))

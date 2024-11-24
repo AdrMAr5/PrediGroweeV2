@@ -18,6 +18,7 @@ type StatsClient interface {
 	GetSummary() (models.StatsSummary, error)
 	GetSurvey(id string) (models.SurveyResponse, error)
 	GetAllSurveys() ([]models.SurveyResponse, error)
+	GetStatsGroupedBySurvey(groupBy string) ([]models.SurveyGroupedStats, error)
 }
 
 type StatsRestClient struct {
@@ -222,4 +223,22 @@ func (c *StatsRestClient) GetAllSurveys() ([]models.SurveyResponse, error) {
 		return []models.SurveyResponse{}, fmt.Errorf("failed to decode response body: %w", err)
 	}
 	return surveys, nil
+}
+
+func (c *StatsRestClient) GetStatsGroupedBySurvey(groupBy string) ([]models.SurveyGroupedStats, error) {
+	req, err := c.NewRequestWithAuth("GET", fmt.Sprintf("/grouped?groupBy=%s", groupBy), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var stats []models.SurveyGroupedStats
+	err = json.NewDecoder(resp.Body).Decode(&stats)
+	return stats, err
 }

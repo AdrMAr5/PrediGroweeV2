@@ -24,3 +24,11 @@ type ActivityStats struct {
 	Total   int       `json:"total"`
 	Correct int       `json:"correct"`
 }
+
+type SurveyGroupedStats struct {
+	Group    string  `json:"group"`
+	Value    string  `json:"value"`
+	Total    int     `json:"total"`
+	Correct  int     `json:"correct"`
+	Accuracy float64 `json:"accuracy"`
+}

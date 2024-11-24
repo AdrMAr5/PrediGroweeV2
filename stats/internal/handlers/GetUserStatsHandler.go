@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
 	"net/http"
@@ -58,6 +59,24 @@ func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	err := stats.ToJSON(rw)
 	if err != nil {
 		h.logger.Error("failed to encode stats")
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+	}
+}
+
+func (h *GetUserStatsHandler) GetUserSessions(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("user_id").(int)
+
+	stats, err := h.storage.GetUserQuizSessionsStats(userID)
+	if err != nil {
+		h.logger.Error("failed to get user sessions", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(rw).Encode(stats)
+	if err != nil {
+		h.logger.Error("failed to encode response", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 	}
 }

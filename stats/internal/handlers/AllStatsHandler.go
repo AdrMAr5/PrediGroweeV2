@@ -124,3 +124,23 @@ func (h *GetAllStatsHandler) GetSummary(w http.ResponseWriter, r *http.Request) 
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *GetAllStatsHandler) GetStatsGroupedBySurvey(w http.ResponseWriter, r *http.Request) {
+	groupBy := r.URL.Query().Get("groupBy")
+	if groupBy == "" {
+		http.Error(w, "groupBy parameter is required", http.StatusBadRequest)
+		return
+	}
+	stats, err := h.storage.GetStatsGroupedBySurveyField(groupBy)
+	if err != nil {
+		h.logger.Error("failed to get grouped stats", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(stats)
+	if err != nil {
+		h.logger.Error("failed to encode response", zap.Error(err))
+	}
+}
