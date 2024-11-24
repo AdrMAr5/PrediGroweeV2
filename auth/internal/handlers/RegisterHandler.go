@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type RegisterHandler struct {
@@ -38,6 +39,7 @@ func (h *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user", http.StatusBadRequest)
 		return
 	}
+	user.Email = strings.ToLower(user.Email)
 	if _, err := h.store.GetUserByEmail(user.Email); err == nil {
 		http.Error(w, "User already exists", http.StatusConflict)
 		return

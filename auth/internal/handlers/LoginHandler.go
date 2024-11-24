@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,7 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	userPayload.Email = strings.ToLower(userPayload.Email)
 	dbUser, err := h.store.GetUserByEmail(userPayload.Email)
 	if err != nil {
 		h.logger.Error("Error getting user by email", zap.Error(err))
