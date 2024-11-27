@@ -106,3 +106,14 @@ func (h *AllStatsHandler) GetStatsGroupedBySurvey(w http.ResponseWriter, r *http
 		h.logger.Error("failed to encode response", zap.Error(err))
 	}
 }
+
+func (h *AllStatsHandler) DeleteResponse(w http.ResponseWriter, r *http.Request) {
+	responseId := r.PathValue("id")
+	err := h.statsClient.DeleteResponse(responseId)
+	if err != nil {
+		h.logger.Error("failed to delete response", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

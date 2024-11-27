@@ -3,6 +3,7 @@ package models
 import "time"
 
 type QuestionResponse struct {
+	ID         int        `json:"id"`
 	QuestionID int        `json:"question_id"`
 	Answer     string     `json:"answer"`
 	IsCorrect  bool       `json:"is_correct"`

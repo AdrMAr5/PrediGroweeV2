@@ -147,26 +147,26 @@ services:
       - INTERNAL_API_KEY=api_key
     depends_on:
       - auth
-  frontend:
-    build:
-      context: ../PrediGroweeV2-UI
-      dockerfile: Dockerfile.dev
-      args:
-        - ENV=local
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
-        - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
-        - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
-        - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
-        - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
-        - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
-    environment:
-      - ENV=local
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
-      - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
-      - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
-      - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
-      - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
-      - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+#  frontend:
+#    build:
+#      context: ../PrediGroweeV2-UI
+#      dockerfile: Dockerfile.dev
+#      args:
+#        - ENV=local
+#        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+#        - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
+#        - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
+#        - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
+#        - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
+#        - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+#    environment:
+#      - ENV=local
+#      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=711820824033-s1vvhg02269re31p02bs3snvk3lsnl3a.apps.googleusercontent.com
+#      - NEXT_PUBLIC_AUTH_SERVICE_URL=http://localhost:8080/api/auth
+#      - NEXT_PUBLIC_QUIZ_SERVICE_URL=http://localhost:8080/api/quiz
+#      - NEXT_PUBLIC_STATS_SERVICE_URL=http://localhost:8080/api/stats
+#      - NEXT_PUBLIC_IMAGES_SERVICE_URL=http://localhost:8080/api/images
+#      - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
 
 volumes:
   auth_db_data:

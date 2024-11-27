@@ -7,6 +7,7 @@ import (
 )
 
 type QuestionResponse struct {
+	ID         int        `json:"id"`
 	QuestionID int        `json:"question_id"`
 	CaseCode   string     `json:"case_code"`
 	Answer     string     `json:"answer"`

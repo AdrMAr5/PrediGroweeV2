@@ -95,6 +95,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	// stats
 	statsHandler := handlers.NewAllStatsHandler(a.logger, a.statsClient)
 	mux.HandleFunc("GET /admin/responses", middleware.VerifyAdmin(statsHandler.GetAllResponses, a.authClient))
+	mux.HandleFunc("DELETE /admin/responses/{id}", middleware.VerifyAdmin(statsHandler.DeleteResponse, a.authClient))
 	mux.HandleFunc("GET /admin/stats/questions/{questionId}", middleware.VerifyAdmin(statsHandler.GetStatsForQuestion, a.authClient))
 	mux.HandleFunc("GET /admin/stats/questions", middleware.VerifyAdmin(statsHandler.GetStatsForAllQuestions, a.authClient))
 	mux.HandleFunc("GET /admin/stats/activity", middleware.VerifyAdmin(statsHandler.GetActivityStats, a.authClient))

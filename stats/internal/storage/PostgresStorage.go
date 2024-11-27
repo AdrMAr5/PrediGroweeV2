@@ -260,7 +260,7 @@ func (p *PostgresStorage) GetAllSurveyResponses() ([]models.SurveyResponse, erro
 	return surveys, nil
 }
 func (p *PostgresStorage) GetAllResponses() ([]models.QuestionResponse, error) {
-	query := `SELECT user_id, question_id, answer, correct, answer_time, answers.screen_size, answers.time_spent, answers.case_code FROM answers
+	query := `SELECT id, user_id, question_id, answer, correct, answer_time, answers.screen_size, answers.time_spent, answers.case_code FROM answers
     			join quiz_sessions on answers.session_id = quiz_sessions.session_id
                 order by answer_time desc;`
 	rows, err := p.db.Query(query)
@@ -270,7 +270,7 @@ func (p *PostgresStorage) GetAllResponses() ([]models.QuestionResponse, error) {
 	var stats []models.QuestionResponse
 	for rows.Next() {
 		var stat models.QuestionResponse
-		err = rows.Scan(&stat.UserID, &stat.QuestionID, &stat.Answer, &stat.IsCorrect, &stat.Time, &stat.ScreenSize, &stat.TimeSpent, &stat.CaseCode)
+		err = rows.Scan(&stat.ID, &stat.UserID, &stat.QuestionID, &stat.Answer, &stat.IsCorrect, &stat.Time, &stat.ScreenSize, &stat.TimeSpent, &stat.CaseCode)
 		if err != nil {
 			return nil, err
 		}

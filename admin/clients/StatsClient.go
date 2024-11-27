@@ -19,6 +19,7 @@ type StatsClient interface {
 	GetSurvey(id string) (models.SurveyResponse, error)
 	GetAllSurveys() ([]models.SurveyResponse, error)
 	GetStatsGroupedBySurvey(groupBy string) ([]models.SurveyGroupedStats, error)
+	DeleteResponse(id string) error
 }
 
 type StatsRestClient struct {
@@ -241,4 +242,20 @@ func (c *StatsRestClient) GetStatsGroupedBySurvey(groupBy string) ([]models.Surv
 	var stats []models.SurveyGroupedStats
 	err = json.NewDecoder(resp.Body).Decode(&stats)
 	return stats, err
+}
+
+func (c *StatsRestClient) DeleteResponse(id string) error {
+	req, err := c.NewRequestWithAuth("DELETE", fmt.Sprintf("/responses/%s", id), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
 }
