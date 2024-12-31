@@ -161,6 +161,8 @@ services:
         - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
         - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
         - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+        - NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+        - NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=${NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}
     environment:
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID= ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       - NEXT_PUBLIC_AUTH_SERVICE_URL=https://predigrowee.agh.edu.pl/api/auth
@@ -169,6 +171,8 @@ services:
       - NEXT_PUBLIC_IMAGES_SERVICE_URL=https://predigrowee.agh.edu.pl/api/images
       - NEXT_PUBLIC_ADMIN_SERVICE_URL=https://predigrowee.agh.edu.pl/api/admin
       - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
+      - NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+      - NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=${NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}
     expose:
       - "3000"
 

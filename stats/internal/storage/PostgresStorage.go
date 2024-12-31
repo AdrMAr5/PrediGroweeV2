@@ -33,6 +33,8 @@ type Storage interface {
 	CountCorrectAnswers() (int, error)
 	GetUserQuizSessionsStats(userID int) ([]*models.QuizStats, error)
 	GetStatsGroupedBySurveyField(field string) ([]models.SurveyGroupedStats, error)
+	DeleteUserResponses(userId int) error
+	DeleteResponse(id int) error
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -316,10 +318,10 @@ func (p *PostgresStorage) GetStatsForAllQuestions() ([]models.QuestionAllStats, 
 }
 
 func (p *PostgresStorage) GetActivityStats() ([]models.ActivityStats, error) {
-	query := `SELECT date_trunc('day', answer_time) as date, count(*), sum(CASE WHEN correct THEN 1 ELSE 0 END) FROM answers
+	query := `SELECT * FROM (SELECT date_trunc('day', answer_time) as date, count(*), sum(CASE WHEN correct THEN 1 ELSE 0 END) FROM answers
 				group by date_trunc('day', answer_time)
-				order by date_trunc('day', answer_time)
-				limit 10`
+				order by date_trunc('day', answer_time) desc
+				limit 10) as dcs ORDER BY date ASC`
 	var stats []models.ActivityStats
 	rows, err := p.db.Query(query)
 	if err != nil {
@@ -364,16 +366,77 @@ func (p *PostgresStorage) CountCorrectAnswers() (int, error) {
 }
 
 func (p *PostgresStorage) GetStatsGroupedBySurveyField(field string) ([]models.SurveyGroupedStats, error) {
-	query := fmt.Sprintf(`
-        SELECT 
-            us.%s as group_field,
-            COUNT(a.session_id) as total,
-            SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
-        FROM users_surveys us
-        LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
-        LEFT JOIN answers a ON qs.session_id = a.session_id
-        WHERE us.%s IS NOT NULL
-        GROUP BY us.%s`, field, field, field)
+	var query string
+	switch field {
+	case "gender":
+		query = `
+           SELECT 
+               us.gender as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.gender IS NOT NULL
+           GROUP BY us.gender`
+	case "age":
+		query = `
+           SELECT 
+               us.age as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.age IS NOT NULL
+           GROUP BY us.age`
+	case "vision_defect":
+		query = `
+           SELECT 
+               us.vision_defect as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.vision_defect IS NOT NULL
+           GROUP BY us.vision_defect`
+	case "education":
+		query = `
+           SELECT 
+               us.education as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.education IS NOT NULL
+           GROUP BY us.education`
+	case "experience":
+		query = `
+           SELECT 
+               us.experience as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.experience IS NOT NULL
+           GROUP BY us.experience`
+	case "country":
+		query = `
+           SELECT 
+               us.country as group_field,
+               COUNT(a.session_id) as total,
+               SUM(CASE WHEN a.correct THEN 1 ELSE 0 END) as correct
+           FROM users_surveys us
+           LEFT JOIN quiz_sessions qs ON us.user_id = qs.user_id
+           LEFT JOIN answers a ON qs.session_id = a.session_id
+           WHERE us.country IS NOT NULL
+           GROUP BY us.country`
+	default:
+		return nil, fmt.Errorf("unsupported field: %s", field)
+	}
 
 	rows, err := p.db.Query(query)
 	if err != nil {
@@ -395,4 +458,19 @@ func (p *PostgresStorage) GetStatsGroupedBySurveyField(field string) ([]models.S
 		stats = append(stats, s)
 	}
 	return stats, nil
+}
+
+func (p *PostgresStorage) DeleteUserResponses(userId int) error {
+	_, err := p.db.Exec(`DELETE FROM answers WHERE session_id IN (SELECT session_id FROM quiz_sessions WHERE user_id = $1)`, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *PostgresStorage) DeleteResponse(id int) error {
+	_, err := p.db.Exec(`DELETE FROM answers where id = $1`, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

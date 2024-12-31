@@ -102,6 +102,15 @@ func (u *UsersHandler) GetUserDetails(w http.ResponseWriter, r *http.Request) {
 
 func (u *UsersHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("id")
+	query := r.URL.Query().Get("withResponses")
+	if query == "true" {
+		err := u.statsClient.DeleteUserResponses(userID)
+		if err != nil {
+			u.logger.Error("failed to delete user responses", zap.Error(err))
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+	}
 	err := u.authClient.DeleteUser(userID)
 	if err != nil {
 		u.logger.Error("failed to delete user", zap.Error(err))

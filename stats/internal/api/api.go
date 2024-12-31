@@ -80,20 +80,22 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /stats/sessions/save", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveSession, a.logger, internalApiKey))
 	mux.HandleFunc("POST /stats/sessions/{quizSessionId}/respond", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).SaveResponse, a.logger, internalApiKey))
 	mux.HandleFunc("POST /stats/sessions/{quizSessionId}/finish", middleware.InternalAuth(handlers.NewQuizStatsHandler(a.storage, a.logger).FinishSession, a.logger, internalApiKey))
-
 	// admin
 	allStatsHandler := handlers.NewGetAllStatsHandler(a.storage, a.logger)
-	mux.HandleFunc("GET /stats/users/{id}", middleware.InternalAuth(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.logger, internalApiKey))
+	userStatsHandler := handlers.NewUserStatsHandler(a.storage, a.logger)
+	mux.HandleFunc("GET /stats/users/{id}", middleware.InternalAuth(userStatsHandler.Handle, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/responses", middleware.InternalAuth(allStatsHandler.GetResponses, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/questions/{id}/stats", middleware.InternalAuth(allStatsHandler.GetStatsForQuestion, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/activity", middleware.InternalAuth(allStatsHandler.GetActivity, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/summary", middleware.InternalAuth(allStatsHandler.GetSummary, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/surveys/users/{id}", middleware.InternalAuth(handlers.NewSurveysHandler(a.storage, a.logger).GetSurvey, a.logger, internalApiKey))
 	mux.HandleFunc("GET /stats/grouped", middleware.InternalAuth(allStatsHandler.GetStatsGroupedBySurvey, a.logger, internalApiKey))
+	mux.HandleFunc("DELETE /stats/users/{id}/responses", middleware.InternalAuth(userStatsHandler.DeleteUserResponses, a.logger, internalApiKey))
+	mux.HandleFunc("DELETE /stats/responses/{id}", middleware.InternalAuth(allStatsHandler.DeleteResponse, a.logger, internalApiKey))
 
 	//external
-	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
+	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
 	mux.HandleFunc("GET /stats/quiz/{quizSessionId}", middleware.VerifyToken(handlers.NewQuizStatsHandler(a.storage, a.logger).GetStats, a.authClient))
-	mux.HandleFunc("GET /stats/sessions", middleware.VerifyToken(handlers.NewGetUserStatsHandler(a.storage, a.logger).GetUserSessions, a.authClient))
+	mux.HandleFunc("GET /stats/sessions", middleware.VerifyToken(handlers.NewUserStatsHandler(a.storage, a.logger).GetUserSessions, a.authClient))
 	mux.HandleFunc("POST /stats/survey", middleware.VerifyToken(handlers.NewSurveysHandler(a.storage, a.logger).Save, a.authClient))
 }

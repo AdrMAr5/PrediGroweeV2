@@ -122,7 +122,6 @@ func (h *GetAllStatsHandler) GetSummary(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *GetAllStatsHandler) GetStatsGroupedBySurvey(w http.ResponseWriter, r *http.Request) {
@@ -142,5 +141,19 @@ func (h *GetAllStatsHandler) GetStatsGroupedBySurvey(w http.ResponseWriter, r *h
 	err = json.NewEncoder(w).Encode(stats)
 	if err != nil {
 		h.logger.Error("failed to encode response", zap.Error(err))
+	}
+}
+
+func (h *GetAllStatsHandler) DeleteResponse(w http.ResponseWriter, r *http.Request) {
+	resId := r.PathValue("id")
+	ID, err := strconv.Atoi(resId)
+	if err != nil {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+	err = h.storage.DeleteResponse(ID)
+	if err != nil {
+		http.Error(w, "couldn't delete response", http.StatusInternalServerError)
+		return
 	}
 }

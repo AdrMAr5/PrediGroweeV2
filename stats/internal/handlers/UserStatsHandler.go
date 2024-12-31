@@ -10,16 +10,16 @@ import (
 	"strconv"
 )
 
-type GetUserStatsHandler struct {
+type UserStatsHandler struct {
 	storage storage.Storage
 	logger  *zap.Logger
 }
 
-func NewGetUserStatsHandler(storage storage.Storage, logger *zap.Logger) *GetUserStatsHandler {
-	return &GetUserStatsHandler{storage: storage, logger: logger}
+func NewUserStatsHandler(storage storage.Storage, logger *zap.Logger) *UserStatsHandler {
+	return &UserStatsHandler{storage: storage, logger: logger}
 }
 
-func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
+func (h *UserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	var userID int
 	userId := r.PathValue("id")
 	if userId == "" {
@@ -63,7 +63,7 @@ func (h *GetUserStatsHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *GetUserStatsHandler) GetUserSessions(rw http.ResponseWriter, r *http.Request) {
+func (h *UserStatsHandler) GetUserSessions(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(int)
 
 	stats, err := h.storage.GetUserQuizSessionsStats(userID)
@@ -79,4 +79,20 @@ func (h *GetUserStatsHandler) GetUserSessions(rw http.ResponseWriter, r *http.Re
 		h.logger.Error("failed to encode response", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 	}
+}
+
+func (h *UserStatsHandler) DeleteUserResponses(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("deleting user responses")
+	userID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	err = h.storage.DeleteUserResponses(userID)
+	if err != nil {
+		h.logger.Error("failed to delete user responses", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
