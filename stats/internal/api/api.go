@@ -99,4 +99,5 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /stats/quiz/{quizSessionId}", middleware.VerifyToken(handlers.NewQuizStatsHandler(a.storage, a.logger).GetStats, a.authClient))
 	mux.HandleFunc("GET /stats/sessions", middleware.VerifyToken(handlers.NewUserStatsHandler(a.storage, a.logger).GetUserSessions, a.authClient))
 	mux.HandleFunc("POST /stats/survey", middleware.VerifyToken(handlers.NewSurveysHandler(a.storage, a.logger).Save, a.authClient))
+	mux.HandleFunc("GET /stats/survey", middleware.VerifyToken(handlers.NewSurveysHandler(a.storage, a.logger).GetSurvey, a.authClient))
 }

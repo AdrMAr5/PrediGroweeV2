@@ -50,8 +50,11 @@ func (h *SurveysHandler) Save(w http.ResponseWriter, r *http.Request) {
 func (h *SurveysHandler) GetSurvey(w http.ResponseWriter, r *http.Request) {
 	userId := r.PathValue("id")
 	if userId == "" {
-		http.Error(w, "missing user id", http.StatusBadRequest)
-		return
+		userId = strconv.Itoa(r.Context().Value("user_id").(int))
+		if userId == "" {
+			http.Error(w, "missing user id", http.StatusBadRequest)
+			return
+		}
 	}
 
 	var surveyResponses interface{}
