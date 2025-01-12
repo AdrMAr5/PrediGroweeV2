@@ -53,7 +53,7 @@ func (h *AllStatsHandler) GetStatsForQuestion(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (h *AllStatsHandler) GetStatsForAllQuestions(w http.ResponseWriter, r *http.Request) {
+func (h *AllStatsHandler) GetStatsForAllQuestions(w http.ResponseWriter, _ *http.Request) {
 	stats, err := h.statsClient.GetStatsForAllQuestions()
 	if err != nil {
 		h.logger.Error("failed to get stats", zap.Error(err))
@@ -116,4 +116,14 @@ func (h *AllStatsHandler) DeleteResponse(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AllStatsHandler) GetStatsForUsers(w http.ResponseWriter, _ *http.Request) {
+	stats, err := h.statsClient.GetAllUsersStats()
+	if err != nil {
+		h.logger.Error("failed to get user stats", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(stats)
 }

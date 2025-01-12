@@ -35,6 +35,7 @@ type Storage interface {
 	GetStatsGroupedBySurveyField(field string) ([]models.SurveyGroupedStats, error)
 	DeleteUserResponses(userId int) error
 	DeleteResponse(id int) error
+	GetAllUsersStats() ([]models.UserQuizStats, error)
 }
 
 var ErrSessionNotFound = fmt.Errorf("session not found")
@@ -473,4 +474,33 @@ func (p *PostgresStorage) DeleteResponse(id int) error {
 		return err
 	}
 	return nil
+}
+func (p *PostgresStorage) GetAllUsersStats() ([]models.UserQuizStats, error) {
+	query := `
+        SELECT s.user_id,
+               COUNT(*) as total_answers,
+               SUM(CASE WHEN correct THEN 1 ELSE 0 END) as correct_answers,
+               us.experience,
+               us.education
+        FROM answers a
+        JOIN quiz_sessions s ON a.session_id = s.session_id
+        LEFT JOIN users_surveys us ON s.user_id = us.user_id
+        GROUP BY s.user_id, us.experience, us.education`
+
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []models.UserQuizStats
+	for rows.Next() {
+		var stat models.UserQuizStats
+		err := rows.Scan(&stat.UserID, &stat.TotalAnswers, &stat.CorrectAnswers, &stat.Experience, &stat.Education)
+		if err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
 }

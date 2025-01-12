@@ -81,6 +81,10 @@ func (a *ApiServer) registerRoutes(router *http.ServeMux) {
 	router.HandleFunc("GET /auth/verifySession", middleware.ValidateSession(handlers.NewVerifySessionHandler(a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/refresh", middleware.ValidateSession(handlers.NewRefreshTokenHandler(a.storage, a.logger).Handle, a.storage))
 	router.HandleFunc("POST /auth/logout", middleware.ValidateSession(handlers.NewLogOutHandler(a.storage, a.logger).Handle, a.storage))
+	resetHandler := handlers.NewResetPasswordHandler(a.storage, a.logger)
+	router.HandleFunc("POST /auth/reset-password", resetHandler.RequestReset)
+	router.HandleFunc("POST /auth/reset-password/confirm", resetHandler.Reset)
+	router.HandleFunc("GET /auth/reset-password/verify", resetHandler.VerifyToken)
 
 	router.HandleFunc("GET /auth/verify-email", handlers.NewRegisterHandler(a.storage, a.logger).Verify)
 

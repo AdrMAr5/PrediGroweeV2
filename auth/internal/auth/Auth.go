@@ -107,3 +107,21 @@ func GenerateVerificationToken(id string) (string, error) {
 	})
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
+
+func SendPasswordResetEmail(to, token string) error {
+	e := email.NewEmail()
+	e.From = "PrediGrowee <noreply@predigrowee.agh.edu.pl>"
+	e.To = []string{to}
+	e.Subject = "Reset your password"
+	e.HTML = []byte(fmt.Sprintf(`
+        <h1>Reset your password</h1>
+        <p>Click <a href="https://predigrowee.agh.edu.pl/reset-password?token=%s">here</a> to reset your password.</p>
+    `, token))
+
+	return e.Send("smtp.gmail.com:587", smtp.PlainAuth(
+		"",
+		os.Getenv("GMAIL_USER"),
+		os.Getenv("GMAIL_PASSWORD"),
+		"smtp.gmail.com",
+	))
+}

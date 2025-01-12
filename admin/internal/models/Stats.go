@@ -15,9 +15,10 @@ type QuestionResponse struct {
 }
 
 type QuestionStats struct {
-	QuestionID int `json:"question_id"`
-	Total      int `json:"total"`
-	Correct    int `json:"correct"`
+	QuestionID int    `json:"question_id"`
+	CaseCode   string `json:"case_id"`
+	Total      int    `json:"total"`
+	Correct    int    `json:"correct"`
 }
 
 type ActivityStats struct {
@@ -32,4 +33,11 @@ type SurveyGroupedStats struct {
 	Total    int     `json:"total"`
 	Correct  int     `json:"correct"`
 	Accuracy float64 `json:"accuracy"`
+}
+type UserQuizStats struct {
+	UserID         int    `json:"user_id"`
+	TotalAnswers   int    `json:"total_answers"`
+	CorrectAnswers int    `json:"correct_answers"`
+	Experience     string `json:"experience"`
+	Education      string `json:"education"`
 }

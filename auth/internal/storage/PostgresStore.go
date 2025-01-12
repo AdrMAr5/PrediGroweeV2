@@ -28,6 +28,7 @@ type Store interface {
 	GetUsersCount() int
 	GetActiveUsersCount() int
 	GetLast24hRegisteredCount() int
+	UpdateUserPassword(userID int, hashedPassword string) error
 }
 type FirestoreStorage struct {
 	config string
@@ -228,4 +229,8 @@ func (p *PostgresStorage) GetLast24hRegisteredCount() int {
 		return 0
 	}
 	return count
+}
+func (p *PostgresStorage) UpdateUserPassword(userID int, hashedPassword string) error {
+	_, err := p.db.Exec("UPDATE users SET pwd = $1 WHERE id = $2", hashedPassword, userID)
+	return err
 }

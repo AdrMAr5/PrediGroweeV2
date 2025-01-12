@@ -100,6 +100,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /admin/stats/questions", middleware.VerifyAdmin(statsHandler.GetStatsForAllQuestions, a.authClient))
 	mux.HandleFunc("GET /admin/stats/activity", middleware.VerifyAdmin(statsHandler.GetActivityStats, a.authClient))
 	mux.HandleFunc("GET /admin/stats/grouped", middleware.VerifyAdmin(statsHandler.GetStatsGroupedBySurvey, a.authClient))
+	mux.HandleFunc("GET /admin/stats/users", middleware.VerifyAdmin(statsHandler.GetStatsForUsers, a.authClient))
 
 	mux.HandleFunc("GET /admin/dashboard", middleware.VerifyAdmin(handlers.NewSummaryHandler(a.logger, a.authClient, a.statsClient, a.quizClient).GetSummary, a.authClient))
 }

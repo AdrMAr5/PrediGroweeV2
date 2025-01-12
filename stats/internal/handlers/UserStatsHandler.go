@@ -96,3 +96,13 @@ func (h *UserStatsHandler) DeleteUserResponses(w http.ResponseWriter, r *http.Re
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (h *UserStatsHandler) GetAllUsersStats(w http.ResponseWriter, _ *http.Request) {
+	stats, err := h.storage.GetAllUsersStats()
+	if err != nil {
+		h.logger.Error("failed to get user stats", zap.Error(err))
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(stats)
+}

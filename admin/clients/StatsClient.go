@@ -21,6 +21,7 @@ type StatsClient interface {
 	GetStatsGroupedBySurvey(groupBy string) ([]models.SurveyGroupedStats, error)
 	DeleteResponse(id string) error
 	DeleteUserResponses(id string) error
+	GetAllUsersStats() ([]models.UserQuizStats, error)
 }
 
 type StatsRestClient struct {
@@ -275,4 +276,19 @@ func (c *StatsRestClient) DeleteUserResponses(id string) error {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 	return nil
+}
+func (c *StatsRestClient) GetAllUsersStats() ([]models.UserQuizStats, error) {
+	req, err := c.NewRequestWithAuth("GET", "/users/stats", nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.MakeRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var stats []models.UserQuizStats
+	err = json.NewDecoder(resp.Body).Decode(&stats)
+	return stats, err
 }

@@ -35,6 +35,14 @@ type QuizStats struct {
 	StartTime      *time.Time     `json:"start_time"`
 }
 
+type UserQuizStats struct {
+	UserID         int    `json:"user_id"`
+	TotalAnswers   int    `json:"total_answers"`
+	CorrectAnswers int    `json:"correct_answers"`
+	Experience     string `json:"experience"`
+	Education      string `json:"education"`
+}
+
 func (s *QuizStats) ToJSON(w io.Writer) error {
 	return json.NewEncoder(w).Encode(s)
 }
@@ -44,9 +52,10 @@ func (u *UserStats) ToJSON(w io.Writer) error {
 }
 
 type QuestionAllStats struct {
-	QuestionID int `json:"question_id"`
-	Total      int `json:"total"`
-	Correct    int `json:"correct"`
+	QuestionID int    `json:"question_id"`
+	CaseCode   string `json:"case_id"`
+	Total      int    `json:"total"`
+	Correct    int    `json:"correct"`
 }
 
 type ActivityStats struct {

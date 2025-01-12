@@ -92,6 +92,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /stats/grouped", middleware.InternalAuth(allStatsHandler.GetStatsGroupedBySurvey, a.logger, internalApiKey))
 	mux.HandleFunc("DELETE /stats/users/{id}/responses", middleware.InternalAuth(userStatsHandler.DeleteUserResponses, a.logger, internalApiKey))
 	mux.HandleFunc("DELETE /stats/responses/{id}", middleware.InternalAuth(allStatsHandler.DeleteResponse, a.logger, internalApiKey))
+	mux.HandleFunc("GET /stats/users/stats", middleware.InternalAuth(userStatsHandler.GetAllUsersStats, a.logger, internalApiKey))
 
 	//external
 	mux.HandleFunc("GET /stats/userStats", middleware.VerifyToken(handlers.NewUserStatsHandler(a.storage, a.logger).Handle, a.authClient))
