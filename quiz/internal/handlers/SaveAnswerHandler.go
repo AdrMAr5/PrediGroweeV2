@@ -68,12 +68,7 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	h.logger.Info("submitting answer")
 
 	session.Status = models.QuizStatusInProgress
-	err = h.storage.UpdateQuizSession(session)
-	if err != nil {
-		h.logger.Error("failed to update quiz session", zap.Error(err))
-		http.Error(rw, "internal server error", http.StatusInternalServerError)
-		return
-	}
+
 	var answer models.QuestionAnswer
 	err = json.NewDecoder(r.Body).Decode(&answer)
 	if err != nil {
@@ -104,6 +99,12 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	err = h.SetNextQuestionID(&session)
 	if err != nil {
 		h.logger.Error("failed to set next question id", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = h.storage.UpdateQuizSession(session)
+	if err != nil {
+		h.logger.Error("failed to update quiz session", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
