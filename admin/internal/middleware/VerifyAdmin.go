@@ -25,9 +25,15 @@ func VerifyAdmin(next http.HandlerFunc, authClient clients.AuthClient) http.Hand
 			return
 		}
 		if userData.Role != models.RoleAdmin {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			log.Println("not admin user attempted admin action")
-			return
+			if userData.Role != models.RoleTeacher {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				log.Println("not admin user attempted admin action")
+				return
+			}
+			if r.Method != http.MethodGet {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
 		}
 		r = r.WithContext(context.WithValue(r.Context(), "user_id", userData.UserID))
 		r = r.WithContext(context.WithValue(r.Context(), "user_role", userData.Role))

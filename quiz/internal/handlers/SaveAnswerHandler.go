@@ -9,6 +9,7 @@ import (
 	"quiz/internal/models"
 	"quiz/internal/storage"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -66,12 +67,6 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	}
 	h.logger.Info("submitting answer")
 
-	err = h.SetNextQuestionID(&session)
-	if err != nil {
-		h.logger.Error("failed to set next question id", zap.Error(err))
-		http.Error(rw, "internal server error", http.StatusInternalServerError)
-		return
-	}
 	session.Status = models.QuizStatusInProgress
 	err = h.storage.UpdateQuizSession(session)
 	if err != nil {
@@ -92,16 +87,23 @@ func (h *SubmitAnswerHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
+	fmt.Println("question", session.CurrentQuestionID, "answer", answer.Answer, "correct", correct)
 	err = h.statsClient.SaveResponse(session.ID, models.QuestionAnswer{
 		QuestionID: session.CurrentQuestionID,
 		Answer:     answer.Answer,
-		IsCorrect:  answer.Answer == correct,
+		IsCorrect:  strings.EqualFold(strings.TrimSpace(answer.Answer), strings.TrimSpace(correct)),
 		ScreenSize: answer.ScreenSize,
 		TimeSpent:  int(timeSpend.Seconds()),
 		CaseCode:   question.Case.Code,
 	})
 	if err != nil {
 		h.logger.Error("failed to save response", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	err = h.SetNextQuestionID(&session)
+	if err != nil {
+		h.logger.Error("failed to set next question id", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)
 		return
 	}
