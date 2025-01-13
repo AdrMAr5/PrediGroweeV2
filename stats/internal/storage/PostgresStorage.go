@@ -496,10 +496,13 @@ func (p *PostgresStorage) GetAllUsersStats() ([]models.UserQuizStats, error) {
 	var stats []models.UserQuizStats
 	for rows.Next() {
 		var stat models.UserQuizStats
-		err := rows.Scan(&stat.UserID, &stat.TotalAnswers, &stat.CorrectAnswers, &stat.Experience, &stat.Education)
+		var experience, education sql.NullString
+		err := rows.Scan(&stat.UserID, &stat.TotalAnswers, &stat.CorrectAnswers, &experience, &education)
 		if err != nil {
 			return nil, err
 		}
+		stat.Experience = experience.String
+		stat.Education = education.String
 		stats = append(stats, stat)
 	}
 	return stats, nil
