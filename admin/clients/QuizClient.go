@@ -21,6 +21,7 @@ type QuizClient interface {
 	CreateOption(option models.Option) (models.Option, error)
 	DeleteOption(id string) error
 	GetSummary() (models.QuizSummary, error)
+	UpdateParametersOrder(order []models.Parameter) error
 }
 
 type QuizRestClient struct {
@@ -259,4 +260,20 @@ func (c *QuizRestClient) GetSummary() (models.QuizSummary, error) {
 	var summary models.QuizSummary
 	err = json.NewDecoder(resp.Body).Decode(&summary)
 	return summary, err
+}
+func (c *QuizRestClient) UpdateParametersOrder(order []models.Parameter) error {
+	req, err := c.NewRequestWithAuth("PUT", "/parameters/order", order)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
 }

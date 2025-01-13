@@ -208,3 +208,14 @@ func (h *QuizHandler) DeleteOption(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *QuizHandler) UpdateParametersOrder(w http.ResponseWriter, r *http.Request) {
+	var newOrder []models.Parameter
+	err := json.NewDecoder(r.Body).Decode(&newOrder)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	err = h.quizClient.UpdateParametersOrder(newOrder)
+}

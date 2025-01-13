@@ -50,6 +50,7 @@ type Store interface {
 	DeleteParameter(id int) error
 	GetAllParameters() ([]models.Parameter, error)
 	GetParameterByID(id int) (models.Parameter, error)
+	UpdateParametersOrder(params []models.Parameter) error
 
 	//groups
 	GetGroupQuestionsIDsRandomOrder(groupID int) ([]int, error)
@@ -677,9 +678,9 @@ func (s *PostgresStorage) GetParameterByID(id int) (models.Parameter, error) {
 
 func (s *PostgresStorage) GetAllParameters() ([]models.Parameter, error) {
 	query := `
-        SELECT id, name, description, reference_value
+        SELECT id, name, description, reference_value, display_order
         FROM parameters
-        ORDER BY id`
+        ORDER BY display_order, id`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -695,6 +696,7 @@ func (s *PostgresStorage) GetAllParameters() ([]models.Parameter, error) {
 			&p.Name,
 			&p.Description,
 			&p.ReferenceValues,
+			&p.Order,
 		)
 		if err != nil {
 			return nil, err
@@ -710,7 +712,7 @@ func (s *PostgresStorage) getCaseParameters(caseID int) ([]models.Parameter, []m
 	query := `select cp.parameter_id, cp.value_1, cp.value_2, cp.value_3, p.description, p.name, p.reference_value from cases c
 		join case_parameters cp on c.id = cp.case_id
 		join parameters p on cp.parameter_id = p.id
-		where c.id=$1 ORDER BY p.id`
+		where c.id=$1 ORDER BY p.display_order, p.id`
 	rows, err := s.db.Query(query, caseID)
 	if err != nil {
 		return nil, nil, err
@@ -795,4 +797,26 @@ func (s *PostgresStorage) DeleteOption(id int) error {
 	query := "DELETE FROM options WHERE id = $1"
 	_, err := s.db.Exec(query, id)
 	return err
+}
+func (s *PostgresStorage) UpdateParametersOrder(params []models.Parameter) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`UPDATE parameters SET display_order = $1 WHERE id = $2`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, param := range params {
+		_, err = stmt.Exec(param.Order, param.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

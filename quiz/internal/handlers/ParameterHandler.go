@@ -101,3 +101,18 @@ func (h *ParameterHandler) GetAllParameters(w http.ResponseWriter, _ *http.Reque
 		return
 	}
 }
+func (h *ParameterHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {
+	var params []models.Parameter
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.storage.UpdateParametersOrder(params); err != nil {
+		h.logger.Error("Failed to update parameters order", zap.Error(err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

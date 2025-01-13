@@ -26,6 +26,7 @@ type Parameter struct {
 	Name            string `json:"name"`
 	Description     string `json:"description"`
 	ReferenceValues string `json:"reference_values"`
+	Order           int    `json:"order"`
 }
 
 type ParameterValue struct {
