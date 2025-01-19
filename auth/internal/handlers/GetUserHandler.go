@@ -19,7 +19,7 @@ func NewGetUserHandler(store storage.Store, logger *zap.Logger) *GetUserHandler 
 }
 func (h *GetUserHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("user_id").(int)
-	user, err := h.store.GetUserById(userID)
+	user, err := h.store.GetUserById(userID, false)
 	if err != nil {
 		http.Error(rw, "User not found", http.StatusNotFound)
 		return

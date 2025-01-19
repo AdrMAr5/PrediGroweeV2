@@ -26,7 +26,7 @@ func (h *AdminGetUserHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user id", http.StatusBadRequest)
 		return
 	}
-	user, err := h.storage.GetUserById(userId)
+	user, err := h.storage.GetUserById(userId, false)
 	if err != nil {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return

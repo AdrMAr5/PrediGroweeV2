@@ -11,7 +11,7 @@ type Store interface {
 	Ping() error
 	Close() error
 	CreateUser(user *models.User) (*models.User, error)
-	GetUserById(id int) (*models.User, error)
+	GetUserById(id int, withPwd bool) (*models.User, error)
 	GetUserByIdInternal(id int) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	SaveUserSession(token models.UserSession) error
@@ -58,11 +58,18 @@ func (p *PostgresStorage) CreateUser(user *models.User) (*models.User, error) {
 	return &userCreated, nil
 }
 
-func (p *PostgresStorage) GetUserById(id int) (*models.User, error) {
+func (p *PostgresStorage) GetUserById(id int, withPwd bool) (*models.User, error) {
 	var user models.User
-	err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id, verified, created_at FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID, &user.Verified, &user.CreatedAt)
-	if err != nil {
-		return nil, err
+	if withPwd {
+		err := p.db.QueryRow("SELECT id, first_name, last_name, email, pwd, role, google_id, verified, created_at FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Role, &user.GoogleID, &user.Verified, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := p.db.QueryRow("SELECT id, first_name, last_name, email, role, google_id, verified, created_at FROM users WHERE id = $1", id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Role, &user.GoogleID, &user.Verified, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &user, nil
 }

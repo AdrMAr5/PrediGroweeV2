@@ -29,7 +29,7 @@ func ValidateSession(next http.HandlerFunc, storage storage.Store) http.HandlerF
 			http.Error(w, "Session expired. Please log in", http.StatusUnauthorized)
 			return
 		}
-		user, err := storage.GetUserById(session.UserID)
+		user, err := storage.GetUserById(session.UserID, false)
 		if err != nil {
 			log.Printf("Failed to get user from storage: %v", err)
 			http.Error(w, "User not found", http.StatusUnauthorized)

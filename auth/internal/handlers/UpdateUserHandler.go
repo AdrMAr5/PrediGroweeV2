@@ -37,7 +37,7 @@ func (h *UpdateUserHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "invalid request payload", http.StatusBadRequest)
 		return
 	}
-	dbUser, err := h.storage.GetUserById(userID)
+	dbUser, err := h.storage.GetUserById(userID, true)
 	if err != nil {
 		h.logger.Error("failed to get user", zap.Error(err))
 		http.Error(rw, "internal server error", http.StatusInternalServerError)

@@ -44,7 +44,7 @@ func ValidateAccessToken(next http.HandlerFunc, storage storage.Store) http.Hand
 		}
 		log.Printf("User ID from token: %d", userID)
 
-		user, err := storage.GetUserById(userID)
+		user, err := storage.GetUserById(userID, false)
 		if err != nil {
 			log.Printf("Failed to get user from storage: %v", err)
 			http.Error(w, "User not found", http.StatusUnauthorized)
