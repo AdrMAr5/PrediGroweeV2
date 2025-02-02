@@ -219,3 +219,41 @@ func (h *QuizHandler) UpdateParametersOrder(w http.ResponseWriter, r *http.Reque
 	}
 	err = h.quizClient.UpdateParametersOrder(newOrder)
 }
+
+func (h *QuizHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
+	settings, err := h.quizClient.GetSettings()
+	if err != nil {
+		h.logger.Error("Failed to get settings", zap.Error(err))
+		http.Error(w, "Failed to get settings", http.StatusInternalServerError)
+		return
+	}
+	settingsJSON, err := json.Marshal(settings)
+	if err != nil {
+		h.logger.Error("Failed to marshal settings", zap.Error(err))
+		http.Error(w, "Failed to marshal settings", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(settingsJSON)
+	if err != nil {
+		h.logger.Error("Failed to write response", zap.Error(err))
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *QuizHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+	newSettings := []models.Settings{}
+	err := json.NewDecoder(r.Body).Decode(&newSettings)
+	if err != nil {
+		h.logger.Error("Failed to decode request", zap.Error(err))
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+	err = h.quizClient.UpdateSettings(newSettings)
+	if err != nil {
+		h.logger.Error("Failed to update settings", zap.Error(err))
+		http.Error(w, "Failed to update settings", http.StatusInternalServerError)
+		return
+	}
+}

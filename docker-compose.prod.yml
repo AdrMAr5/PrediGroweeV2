@@ -173,6 +173,8 @@ services:
       - AUTH_SERVICE_INTERNAL_URL=http://auth:8080/auth
       - NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
       - NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=${NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}
+    volumes:
+      - ./content:/app/content
     expose:
       - "3000"
 
@@ -182,5 +184,6 @@ volumes:
   stats_db_data:
   images_db_data:
   images_data:
+  content:
 
 

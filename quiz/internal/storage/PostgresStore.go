@@ -6,6 +6,7 @@ import (
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"quiz/internal/models"
+	"strconv"
 )
 
 type Store interface {
@@ -18,6 +19,8 @@ type Store interface {
 	UpdateQuizSession(session models.QuizSession) error
 	GetUserActiveQuizSessions(userID int) ([]models.QuizSession, error)
 	GetUserLastQuizSession(userID int) (*models.QuizSession, error)
+	GetTimeLimit() (int, error)
+	SaveSettings(name string, value string) error
 
 	// questions
 	GetQuestionByID(id int) (models.Question, error)
@@ -56,6 +59,7 @@ type Store interface {
 	GetGroupQuestionsIDsRandomOrder(groupID int) ([]int, error)
 	GetNextQuestionGroupID(currentGroup int) (int, error)
 	DeleteOption(id int) error
+	GetSettings() ([]models.Settings, error)
 }
 
 type PostgresStorage struct {
@@ -819,4 +823,46 @@ func (s *PostgresStorage) UpdateParametersOrder(params []models.Parameter) error
 	}
 
 	return tx.Commit()
+}
+
+func (s *PostgresStorage) GetTimeLimit() (int, error) {
+	var timeLimitStr string
+	err := s.db.QueryRow("SELECT value FROM settings WHERE name = 'time_limit'").Scan(&timeLimitStr)
+	if err != nil {
+		return 0, err
+	}
+	timeLimit, err := strconv.Atoi(timeLimitStr)
+	return timeLimit, err
+}
+func (s *PostgresStorage) SaveSettings(name string, value string) error {
+	query := `
+		INSERT INTO settings (name, value)
+		VALUES ($1, $2)
+		ON CONFLICT (name) DO UPDATE SET value = $2`
+
+	_, err := s.db.Exec(query, name, value)
+	return err
+}
+func (s *PostgresStorage) GetSettings() ([]models.Settings, error) {
+	query := `
+		SELECT name, value
+		FROM settings`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var settings []models.Settings
+	for rows.Next() {
+		var setting models.Settings
+		err = rows.Scan(&setting.Name, &setting.Value)
+		if err != nil {
+			return nil, err
+		}
+		settings = append(settings, setting)
+	}
+
+	return settings, nil
 }

@@ -73,9 +73,16 @@ func (h *StartQuizHandler) Handle(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error("failed to save session in stats service", zap.Error(err))
 	}
+	timeLimit, err := h.storage.GetTimeLimit()
+	if err != nil {
+		h.logger.Error("failed to get time limit", zap.Error(err))
+		http.Error(rw, "internal server error", http.StatusInternalServerError)
+		return
+	}
 	rw.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
-		"session": sessionCreated,
+		"session":    sessionCreated,
+		"time_limit": timeLimit,
 	}
 	if err := json.NewEncoder(rw).Encode(response); err != nil {
 		h.logger.Error("failed to encode response", zap.Error(err))

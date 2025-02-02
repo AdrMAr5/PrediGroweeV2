@@ -93,6 +93,9 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /admin/questions/{id}", middleware.VerifyAdmin(quizHandler.UpdateQuestion, a.authClient))
 	mux.HandleFunc("PUT /admin/parameters/order", middleware.VerifyAdmin(quizHandler.UpdateParametersOrder, a.authClient))
 
+	mux.HandleFunc("GET /admin/settings", middleware.VerifyAdmin(quizHandler.GetSettings, a.authClient))
+	mux.HandleFunc("PATCH /admin/settings", middleware.VerifyAdmin(quizHandler.UpdateSettings, a.authClient))
+
 	// stats
 	statsHandler := handlers.NewAllStatsHandler(a.logger, a.statsClient)
 	mux.HandleFunc("GET /admin/responses", middleware.VerifyAdmin(statsHandler.GetAllResponses, a.authClient))

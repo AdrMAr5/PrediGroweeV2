@@ -125,4 +125,7 @@ func (a *ApiServer) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PATCH /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.UpdateParameter, a.logger, apiKey))
 	mux.HandleFunc("DELETE /quiz/parameters/{id}", middleware.InternalAuth(parameterHandler.DeleteParameter, a.logger, apiKey))
 	mux.HandleFunc("PUT /quiz/parameters/order", middleware.InternalAuth(parameterHandler.UpdateOrder, a.logger, apiKey))
+
+	mux.HandleFunc("POST /quiz/settings", middleware.InternalAuth(handlers.NewSettingsHandler(a.storage, a.logger).UpdateSettings, a.logger, apiKey))
+	mux.HandleFunc("GET /quiz/settings", middleware.InternalAuth(handlers.NewSettingsHandler(a.storage, a.logger).GetSettings, a.logger, apiKey))
 }

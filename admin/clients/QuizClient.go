@@ -22,6 +22,8 @@ type QuizClient interface {
 	DeleteOption(id string) error
 	GetSummary() (models.QuizSummary, error)
 	UpdateParametersOrder(order []models.Parameter) error
+	GetSettings() ([]models.Settings, error)
+	UpdateSettings(settings []models.Settings) error
 }
 
 type QuizRestClient struct {
@@ -263,6 +265,40 @@ func (c *QuizRestClient) GetSummary() (models.QuizSummary, error) {
 }
 func (c *QuizRestClient) UpdateParametersOrder(order []models.Parameter) error {
 	req, err := c.NewRequestWithAuth("PUT", "/parameters/order", order)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
+}
+func (c *QuizRestClient) GetSettings() ([]models.Settings, error) {
+	req, err := c.NewRequestWithAuth("GET", "/settings", nil)
+	if err != nil {
+		return []models.Settings{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return []models.Settings{}, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return []models.Settings{}, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var settings []models.Settings
+	err = json.NewDecoder(resp.Body).Decode(&settings)
+	return settings, err
+}
+func (c *QuizRestClient) UpdateSettings(settings []models.Settings) error {
+	req, err := c.NewRequestWithAuth("POST", "/settings", settings)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

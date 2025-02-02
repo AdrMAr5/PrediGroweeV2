@@ -1,0 +1,70 @@
+{
+  "introduction": {
+    "title": "About Predigrowee",
+    "content": "The Predigrowee app is a project created by orthodontists and IT specialists focusing on the human ability to predict facial growth on the basis of cephalometric X-rays. This is the second version of the project - Predigrowee 2.0 which extends application features."
+  },
+  "publications": [
+    {
+      "authors": "Kaźmierczak, S., Juszka, Z., Vandevska-Radunovic, V., Maal, T.J.J., Fudalej, P., Mańdziuk, J.",
+      "year": "2021",
+      "title": "Prediction of the Facial Growth Direction is Challenging",
+      "publication": "Neural Information Processing. ICONIP 2021. Communications in Computer and Information Science, vol 1517. Springer, Cham",
+      "doi": "https://doi.org/10.1007/978-3-030-92310-5_77"
+    },
+    {
+      "authors": "Kaźmierczak, S., Juszka, Z., Grzeszczuk, R., Kurdziel, M., Vandevska-Radunovic, V., Fudalej, P., & Mańdziuk, J.",
+      "year": "2023",
+      "title": "Prediction of the facial growth direction: Regression perspective",
+      "publication": "Communications in Computer and Information Science (pp. 395–407)",
+      "doi": "https://doi.org/10.1007/978-981-99-1648-1_33"
+    }
+  ],
+  "faq": [
+    {
+      "title": "What is the Predigrowee app?",
+      "content": "The Predigrowee app is a project created by orthodontists and IT specialists focusing on the human ability to predict facial growth on the basis of cephalometric X-rays. Our goal is to compare how well human experts are able to predict facial growth in comparison to artificial intelligence."
+    },
+    {
+      "title": "Why do we want to try to predict facial growth?",
+      "content": "The facial growth direction, amount, and timing are one of crucial pieces of information in many fields, such as orthodontics, pediatrics, criminology, or history. But let's focus on orthodontics. With the knowledge about facial growth prediction, orthodontists may create a successful treatment plan and implement early treatment in patients who need interceptive growth modifications or postpone treatment in patients who do not need it. The growth of the face can be estimated using different methods such as anthropometric measurements, measurements on cephalometric X-ray, CBCT, etc."
+    },
+    {
+      "title": "What is the source of the cephalometric X-rays?",
+      "content": "In this project, we focused on cephalometric X-rays from AAOF Craniofacial Growth Legacy Collection.<br><br>Collections included: Bolton-Brush, Burlington, Denver, Fels Longitudinal, Forsyth Twin, Iowa, Mathews, Michigan, Oregon.<br><br>Please find more detailed information about the source of the X-rays here: <a href=\"https://www.aaoflegacycollection.org/aaof_home.html\">AAOF Legacy Collection</a>"
+    },
+    {
+      "title": "How many cases are there?",
+      "content": "There are 453 cases.<br><br>From the AAOF Craniofacial Growth Legacy Collection, we chose only those patients who had X-rays around the age of 9 (before the pubertal growth spurt), 12 (close to the pubertal growth spurt), and 18 (after the pubertal growth spurt).<br><br>We excluded patients who underwent orthodontic treatment – based on braces seen on the X-rays – or if the X-rays were unclear."
+    },
+    {
+      "title": "What are the types of facial growth?",
+      "content": "The type of facial growth, i.e., its direction, intensity, and duration, can be favorable, neutral, or unfavorable when viewed from the clinical perspective. Favorable (horizontal) face growth takes place when elements of the face grow in a direction or with intensity promoting advantageous treatment outcome, while unfavorable (vertical) growth occurs when growth characteristics do not facilitate treatment."
+    },
+    {
+      "title": "What task do I have in this app?",
+      "content": "In this application, we ask you to try to predict facial growth on the basis of the cephalometric X-rays and some cephalometric measurements and decide whether the growth is vertical, horizontal or normal."
+    }
+  ],
+  "team": {
+    "coordinator": {
+      "role": "Project coordinator",
+      "name": "Dawid Juszka, PhD PhD",
+      "affiliation": "AGH University of Krakow, Kraków, Poland"
+    },
+    "support": [
+      {
+        "name": "Zofia Juszka, DDS",
+        "affiliation": "Prof. Loster's Orthodontics, Kraków, Poland"
+      },
+      {
+        "name": "Prof. dr hab. n. med. Piotr Fudalej",
+        "affiliation": "Jagiellonian University Medical College in Krakow, Kraków, Poland; University of Bern, Bern, Switzerland; Palacký University Olomouc, Olomouc, Czech Republic"
+      }
+    ],
+    "developer": {
+      "role": "Web Developer",
+      "name": "Adrian Markowski",
+      "affiliation": "Cybersecurity Student, AGH University of Krakow, Kraków, Poland"
+    }
+  }
+}
